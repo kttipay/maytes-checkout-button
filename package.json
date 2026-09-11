@@ -1,0 +1,76 @@
+{
+  "name": "@maytes/checkout-button",
+  "version": "0.0.1",
+  "description": "Maytes checkout button — drop-in `<script>` that renders a Split with Maytes button and redirects to the Maytes-hosted checkout on click.",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kttipay/checkout-button.git"
+  },
+  "homepage": "https://github.com/kttipay/checkout-button#readme",
+  "bugs": "https://github.com/kttipay/checkout-button/issues",
+  "keywords": [
+    "maytes",
+    "checkout",
+    "payments",
+    "split-payment",
+    "button"
+  ],
+  "sideEffects": [
+    "./dist/checkout-button.js"
+  ],
+  "main": "./dist/checkout-button.cjs",
+  "module": "./dist/checkout-button.mjs",
+  "types": "./dist/checkout-button.d.ts",
+  "browser": "./dist/checkout-button.js",
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/checkout-button.d.ts",
+        "require": "./dist/checkout-button.d.cts"
+      },
+      "import": "./dist/checkout-button.mjs",
+      "require": "./dist/checkout-button.cjs",
+      "default": "./dist/checkout-button.js"
+    },
+    "./browser": "./dist/checkout-button.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "gen-version": "node scripts/gen-version.mjs",
+    "sync:foundation": "node scripts/sync-foundation-tokens.mjs",
+    "prebuild": "node scripts/gen-version.mjs",
+    "build": "tsup && node scripts/hash-and-sri.mjs && node scripts/csp-check.mjs",
+    "build:bundles": "tsup",
+    "build:hash": "node scripts/hash-and-sri.mjs",
+    "cdn-config": "node scripts/cdn-config.mjs",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "csp-check": "node scripts/csp-check.mjs",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "changeset": "changeset",
+    "version": "changeset version && npm run build",
+    "release": "npm run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.10",
+    "@types/node": "20.16.10",
+    "jsdom": "^25.0.1",
+    "tsup": "8.3.5",
+    "typescript": "5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

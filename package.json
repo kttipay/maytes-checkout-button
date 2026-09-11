@@ -10,10 +10,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kttipay/checkout-button.git"
+    "url": "git+https://github.com/kttipay/maytes-checkout-button.git"
   },
-  "homepage": "https://github.com/kttipay/checkout-button#readme",
-  "bugs": "https://github.com/kttipay/checkout-button/issues",
+  "homepage": "https://github.com/kttipay/maytes-checkout-button#readme",
+  "bugs": "https://github.com/kttipay/maytes-checkout-button/issues",
   "keywords": [
     "maytes",
     "checkout",

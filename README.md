@@ -54,7 +54,7 @@ For production, pin an exact release. The readable SemVer URL and the content-ha
         crossorigin="anonymous"></script>
 ```
 
-`v1.0.0` / `795d508b` are examples. The real version, hash, and SRI for each release live in [`CHANGELOG.md`](./CHANGELOG.md), the matching [release](https://github.com/kttipay/checkout-button/releases), and `https://js.maytes.co/integrity.json`.
+`v1.0.0` / `795d508b` are examples. The real version, hash, and SRI for each release live in [`CHANGELOG.md`](./CHANGELOG.md), the matching [release](https://github.com/kttipay/maytes-checkout-button/releases), and `https://js.maytes.co/integrity.json`.
 
 Use a pinned URL in every environment, development included — pinning is what makes the bytes you tested the bytes your shoppers get.
 

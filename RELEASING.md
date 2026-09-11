@@ -17,7 +17,7 @@ anything else; publish to **npm** for types/dev use, distribute at runtime as a
 |---|---|---|
 | PR CI | `.github/workflows/pr.yml` | On every PR: typecheck, vitest, build (tsup + SRI + CSP scan), production-only `npm audit`, and a **changeset-presence gate** (skipped on the bot's own `changeset-release/main` branch, which by construction never adds one). |
 | Release CI | `.github/workflows/release.yml` | On push to `main`: Changesets opens a "Version Packages" PR; merging it publishes to npm (with provenance), deploys the bundle to the CDN, and cuts a GitHub Release directly on this repo. |
-| Versioning | `.changeset/` (`config.json`, `README.md`) | [Changesets](https://github.com/changesets/changesets) in single-package mode with the GitHub changelog formatter (`@changesets/changelog-github`, repo `kttipay/checkout-button`). |
+| Versioning | `.changeset/` (`config.json`, `README.md`) | [Changesets](https://github.com/changesets/changesets) in single-package mode with the GitHub changelog formatter (`@changesets/changelog-github`, repo `kttipay/maytes-checkout-button`). |
 | Version source of truth | `scripts/gen-version.mjs` + `prebuild` script | `src/version.ts` is **generated from `package.json`** so the version can't drift across the two files. |
 | CDN config | `scripts/cdn-config.mjs` | Emits `_headers`/`_redirects` (Cloudflare Pages + Netlify compatible): exact-path immutable cache for each SemVer/hash bundle pin (read from `integrity.json`), short cache for the `/dev/*` rolling alias, CORS, SRI-friendly. |
 | Package metadata | `package.json` | `publishConfig` (public + provenance), `repository`/`homepage`/`bugs`/`keywords`, `sideEffects`, Changesets scripts. |

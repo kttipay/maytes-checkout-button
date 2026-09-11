@@ -1,6 +1,32 @@
-# @maytes/checkout-button
+<p align="center">
+  <img src=".github/logo.svg" height="32" alt="Maytes">
+</p>
 
-Drop-in **Split with Maytes** button. Renders a button and launches the Maytes-hosted checkout. Default mode is same-window redirect; `mode: 'popup'` opts desktop browsers into a centered popup with a branded loader and redirect fallback on mobile or when blocked.
+<h1 align="center">@maytes/checkout-button</h1>
+
+<p align="center">
+  Drop-in <strong>Split with Maytes</strong> button — one script or import, and shoppers can split any checkout with friends.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@maytes/checkout-button"><img alt="npm version" src="https://img.shields.io/npm/v/@maytes/checkout-button?color=4A0324&label=npm"></a>
+  <a href="https://bundlephobia.com/package/@maytes/checkout-button"><img alt="bundle size" src="https://img.shields.io/bundlephobia/minzip/@maytes/checkout-button?color=FE572A&label=gzip"></a>
+  <a href="./CHANGELOG.md"><img alt="provenance" src="https://img.shields.io/badge/npm-provenance-4A0324"></a>
+  <a href="./LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-4A0324"></a>
+</p>
+
+---
+
+Renders a button and launches the Maytes-hosted checkout. Default mode is same-window redirect; `mode: 'popup'` opts desktop browsers into a centered popup with a branded loader and redirect fallback on mobile or when blocked.
+
+## Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+- [Mobile app](#mobile-app)
+- [Development](#development)
+- [Brand colours](#brand-colours-come-from-the-design-foundation)
 
 ## Install
 
@@ -103,4 +129,4 @@ The design-system repo does not publish an npm package yet. When it does (`@ktti
 
 ## License
 
-MIT
+[MIT](./LICENSE)

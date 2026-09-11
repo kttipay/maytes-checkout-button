@@ -70,7 +70,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -89,3 +89,14 @@ jobs:
         run: |
           node scripts/cdn-config.mjs
           npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
+      - name: Backfill release assets for the current version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          gh release upload "v${version}" \
+            dist/checkout-button.js dist/checkout-button.js.map \
+            dist/checkout-button.mjs dist/checkout-button.mjs.map \
+            dist/checkout-button.cjs dist/checkout-button.cjs.map \
+            dist/integrity.json \
+            --repo "${{ github.repository }}" --clobber

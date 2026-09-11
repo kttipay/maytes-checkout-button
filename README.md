@@ -26,7 +26,6 @@ Renders a button and launches the Maytes-hosted checkout. Default mode is same-w
 - [API](#api)
 - [Mobile app](#mobile-app)
 - [Development](#development)
-- [Brand colours](#brand-colours-come-from-the-design-foundation)
 
 ## Install
 
@@ -111,21 +110,7 @@ npm run test:run
 npm run build        # bundles + SRI hashes + CSP scan
 ```
 
-Versioning and changelog are managed with [Changesets](./.changeset/README.md). Run `npm run changeset` with your PR.
-
-## Brand colours come from the design foundation
-
-The Maytes brand colours the button paints (`brand.primary` burgundy, `brand.secondary` orange, the burgundy/700 hover shade, and the inverse text white) are **not hand-written** in this package. They are vendored from the design foundation — `kttipay/designsystem` `web/tokens.ts` — into `src/foundation/brand.generated.ts`, pinned to a release tag recorded in `foundation.lock.json`:
-
-```json
-{ "repo": "kttipay/designsystem", "tag": "v0.3.0", "source": "web/tokens.ts" }
-```
-
-- `src/branding.ts`, `src/styles.ts` and `src/button.ts` read every brand colour from that generated module. Never type a Maytes hex into `src/`.
-- To move to a newer foundation release: `npm run sync:foundation -- --tag vX.Y.Z` (fetches the file at that tag with `gh api`, so you need a logged-in `gh`; `--from ../path/to/designsystem/web/tokens.ts` works offline). The script rewrites the generated module and the lock file. Commit both together.
-- A vitest test fails if the generated header's tag drifts from `foundation.lock.json`, so the file can only change through the script.
-
-The design-system repo does not publish an npm package yet. When it does (`@kttipay/foundation` on GitHub Packages), the upgrade path is to replace the vendored module with that dependency and delete the script and lock file.
+Versioning and changelog are managed with [Changesets](./.changeset/README.md). Run `npm run changeset` with your PR. Brand colours are vendored, not hand-written — see [`RELEASING.md`](./RELEASING.md#brand-colours-come-from-the-design-foundation) for how that works.
 
 ## License
 

@@ -236,6 +236,7 @@ export function renderButton(
     const popup = shouldUsePopup ? openBlankPopup(state) : null;
     if (popup !== null) {
       state.popupWindow = popup;
+      state.popupNavigated = false;
       refocusPopup(popup);
       paintPopupLoadingScreen(popup, state.config.cspNonce);
       showOverlay(state);
@@ -264,6 +265,7 @@ export function renderButton(
         result.checkoutId,
       );
       if (popup !== null) {
+        state.popupNavigated = true;
         navigatePopup(popup, url);
       } else {
         if (shouldUsePopup) {

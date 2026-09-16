@@ -103,7 +103,7 @@ Via the script tag, the same factory is available as the global `window.Maytes(.
 | `renderButton(container, options?)` | Render the button into `container`; returns a cleanup function. Options include `label`, `block`, and `mode: 'redirect' \| 'popup'`. |
 | `redirectToCheckout(options)` | Launch checkout directly (no button). |
 | `checkoutUrl(options)` | Build the hosted checkout URL. |
-| `destroy()` | Tear down the instance and its listeners. |
+| `destroy()` | Tear down the instance and its listeners — call this on unmount or when the instance's config/environment changes, not as a reaction to detecting payment success from your own polling (that can tear down a checkout that's still in progress). To remove a single button, use the cleanup function returned by `renderButton()` or hide/disable the button element instead. |
 
 ## Mobile app
 

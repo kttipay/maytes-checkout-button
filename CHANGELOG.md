@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#2](https://github.com/kttipay/maytes-checkout-button/pull/2) [`e5b8e63`](https://github.com/kttipay/maytes-checkout-button/commit/e5b8e6399dd33e0b3b24131d9f808ebd8eae44ef) Thanks [@kos-maytes](https://github.com/kos-maytes)! - `destroy()` no longer force-closes a popup that has already navigated to the checkout URL. Previously it would close any open popup unconditionally, which could kill an in-progress checkout if the host page called `destroy()` while the popup was still completing (e.g. reacting to its own payment-status polling). A popup is now only auto-closed while it's still on the blank loading screen, before checkout has started.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-scp0qo7rcOJGuuI+gpadCOUQMn7g7hx3lqY9p7Xr2fd7/9Sb/L79DaHKStTTX7Ko
+checkout-button.mjs  sha384-5+TplHKGAk10ajWGdKwpG3pKutLD+v3cOYqtPEvRNLWudyOELPUKuU6sqlAhuy1h
+checkout-button.cjs  sha384-+O2S6KfO4Pc0VEvL+kTsFzxU14W4EILV6+U5mAdW8X43Xm8Qk1aV0y/KbM3Fnp9M
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.0.1/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.0.1/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.0.1/checkout-button.cjs)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.8c71493e.js](https://js.maytes.co/checkout-button.8c71493e.js)
+- [checkout-button.81ea2037.mjs](https://js.maytes.co/checkout-button.81ea2037.mjs)
+- [checkout-button.6d259930.cjs](https://js.maytes.co/checkout-button.6d259930.cjs)
+
+<!-- @hash-sri-end -->
 ## 1.0.0
 
 First public release on npm.

@@ -59,7 +59,7 @@ export const Maytes: MaytesFactory = (options, internal) => {
       state.destroyed = true;
       stopPopupPoll(state);
       hideOverlay(state);
-      closePopupWindow(state.popupWindow);
+      if (!state.popupNavigated) closePopupWindow(state.popupWindow);
       state.popupWindow = null;
       state.busy = false;
       for (const teardown of [...state.teardowns]) teardown();

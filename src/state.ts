@@ -5,6 +5,7 @@ export interface InstanceState {
   busy: boolean;
   overlayEl: HTMLDialogElement | null;
   popupWindow: Window | null;
+  popupNavigated: boolean;
   popupName: string;
   popupPollHandle: ReturnType<typeof setInterval> | null;
   destroyed: boolean;
@@ -41,6 +42,7 @@ export function createInstanceState(
     busy: false,
     overlayEl: null,
     popupWindow: null,
+    popupNavigated: false,
     popupName: generatePopupName(),
     popupPollHandle: null,
     destroyed: false,

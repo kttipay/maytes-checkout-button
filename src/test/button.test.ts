@@ -299,6 +299,21 @@ describe('maytes.renderButton', () => {
     document.removeEventListener('maytes:checkout-opened', opened);
   });
 
+  it('destroy() does not close a popup that already navigated to the checkout URL', async () => {
+    const popup = makeFakePopup();
+    openSpy.mockReturnValueOnce(popup as unknown as Window);
+    const maytes = Maytes({ createCheckout: async () => ({ checkoutId: 'live' }), environment: 'sandbox' });
+    maytes.renderButton(container, { mode: 'popup' });
+    container.querySelector('button')!.click();
+
+    await vi.waitFor(() => expect(popup.location.replace).toHaveBeenCalledOnce());
+
+    maytes.destroy();
+
+    expect(popup.close).not.toHaveBeenCalled();
+    expect(popup.closed).toBe(false);
+  });
+
   it('popup mode closes the orphan popup when createCheckout returns invalid shape', async () => {
     const popup = makeFakePopup();
     openSpy.mockReturnValueOnce(popup as unknown as Window);

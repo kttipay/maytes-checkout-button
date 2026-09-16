@@ -1,6 +1,6 @@
 {
   "name": "@maytes/checkout-button",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Maytes checkout button — drop-in `<script>` that renders a Split with Maytes button and redirects to the Maytes-hosted checkout on click.",
   "license": "MIT",
   "type": "module",

@@ -4,6 +4,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashedUrl, semverPath, semverUrl } from './lib/cdn-config.mjs';
 import { injectSriBlock } from './lib/changelog.mjs';
+import { injectCdnExample } from './lib/readme.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sdkRoot = resolve(here, '..');
@@ -114,5 +115,23 @@ const existingChangelog = existsSync(changelogPath) ? readFileSync(changelogPath
   } else {
     writeFileSync(changelogPath, updated);
     console.log(`[hash-and-sri] wrote dist/integrity.json + CHANGELOG.md (${pkg.version})`);
+
+    // README's CDN example is only refreshed alongside the CHANGELOG, for the
+    // same reason: the "## <version>" section is what marks this as a real
+    // release build rather than an ordinary local/CI build of already-released
+    // (or unreleased) bytes.
+    const readmePath = resolve(sdkRoot, 'README.md');
+    const readme = readFileSync(readmePath, 'utf8');
+    const updatedReadme = injectCdnExample(readme, {
+      semverUrl: iife.semverUrl,
+      hashedUrl: iife.hashedUrl,
+    });
+
+    if (updatedReadme === null) {
+      console.log('[hash-and-sri] README.md CDN example markers not found — skipped');
+    } else {
+      writeFileSync(readmePath, updatedReadme);
+      console.log(`[hash-and-sri] wrote README.md CDN example (${pkg.version})`);
+    }
   }
 }

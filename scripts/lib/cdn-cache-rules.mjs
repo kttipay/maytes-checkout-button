@@ -1,4 +1,6 @@
-const CDN_HOST = 'js.maytes.co';
+import { CDN_ORIGIN } from './cdn-config.mjs';
+
+const CDN_HOST = new URL(CDN_ORIGIN).host;
 export const SEMVER_PIN_WILDCARD = '/v*.*.*/checkout-button.*';
 export const HASH_PIN_WILDCARD = '/checkout-button.*.*';
 export const EVERGREEN_WILDCARD = '/v*/checkout-button.*';
@@ -10,6 +12,8 @@ export const UNHASHED_BUNDLE_PATHS = [
   '/checkout-button.js.map',
   '/checkout-button.mjs.map',
   '/checkout-button.cjs.map',
+  '/checkout-button.d.ts',
+  '/checkout-button.d.cts',
 ];
 
 function scopedToHost(expression) {

@@ -55,6 +55,7 @@
     "build:hash": "node scripts/hash-and-sri.mjs",
     "cdn-config": "node scripts/cdn-config.mjs",
     "cdn-rehydrate": "node scripts/rehydrate-cdn-history.mjs",
+    "cdn-cache-rules": "node scripts/ensure-cdn-cache-rules.mjs",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "csp-check": "node scripts/csp-check.mjs",

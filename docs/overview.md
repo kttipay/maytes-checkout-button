@@ -198,7 +198,6 @@ State is **per-instance** (`createInstanceState`) — there is no module-level s
 
 - **`scripts/csp-check.mjs`** — post-build linter that fails the build if it finds dynamic-code-eval primitives in the bundled output. Result: bundle is CSP-friendly (`script-src 'self'` works with no `'unsafe-eval'`).
 - **`scripts/hash-and-sri.mjs`** — runs after `tsup`, writes `dist/integrity.json`, copies bundles to hashed filenames, and rewrites the SRI block in `CHANGELOG.md` for the current `package.json` version. The CHANGELOG injection runs only when `changeset version` has already created a `## <version>` section for the current version, so ordinary builds never invent a changelog entry. SRI tables are machine-generated.
-- **`scripts/retain-releases.mjs`** — runs in the release deploy before `cdn-config.mjs`; downloads every earlier GitHub release's bundles, verifies them against that release's own `integrity.json`, and copies them into `dist` under their hashed names so previously pinned `/v<version>/` and hashed URLs keep resolving after a new deploy.
 - **No `innerHTML`** — SVG built via `document.createElementNS`.
 
 ## Testing

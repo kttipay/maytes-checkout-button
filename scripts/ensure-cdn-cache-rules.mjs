@@ -14,6 +14,15 @@ const requestHeaders = {
 };
 
 function toApiRule(rule) {
+  if (rule.bypass) {
+    return {
+      description: rule.id,
+      expression: rule.expression,
+      action: 'set_cache_settings',
+      action_parameters: { cache: false },
+    };
+  }
+
   return {
     description: rule.id,
     expression: rule.expression,
@@ -34,6 +43,10 @@ function toApiRule(rule) {
 }
 
 function fromApiRule(apiRule) {
+  if (apiRule.action_parameters?.cache === false) {
+    return { id: apiRule.description, expression: apiRule.expression, bypass: true };
+  }
+
   return {
     id: apiRule.description,
     expression: apiRule.expression,

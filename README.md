@@ -67,13 +67,13 @@ For a guarantee instead of convenience — freeze on a tested build, update on y
 
 <!-- @cdn-example-start -->
 ```html
-<script src="https://js.maytes.co/v1.1.0/checkout-button.js"
+<script src="https://js.maytes.co/v1.1.1/checkout-button.js"
         integrity="sha384-…"
         crossorigin="anonymous"></script>
 ```
 
 ```html
-<script src="https://js.maytes.co/checkout-button.811263f9.js"
+<script src="https://js.maytes.co/checkout-button.4b780d52.js"
         integrity="sha384-…"
         crossorigin="anonymous"></script>
 ```

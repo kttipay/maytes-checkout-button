@@ -11,8 +11,6 @@ export function hashedUrl(hashedName: string): string;
 
 export function majorPath(version: string, sourceName: string): string;
 
-export function majorUrl(version: string, sourceName: string): string;
-
 export function buildCdnConfig(
   releases: Array<{
     version: string;

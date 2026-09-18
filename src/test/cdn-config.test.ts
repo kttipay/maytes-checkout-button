@@ -4,7 +4,6 @@ import {
   cdnUrl,
   hashedUrl,
   majorPath,
-  majorUrl,
   semverPath,
   semverUrl,
 } from '../../scripts/lib/cdn-config.mjs';
@@ -55,10 +54,6 @@ describe('cdn urls', () => {
 
   it('builds full hashed CDN links', () => {
     expect(hashedUrl('checkout-button.abc12345.js')).toBe('https://js.maytes.co/checkout-button.abc12345.js');
-  });
-
-  it('builds full evergreen CDN links', () => {
-    expect(majorUrl('1.0.1', 'checkout-button.js')).toBe('https://js.maytes.co/v1/checkout-button.js');
   });
 
   it('normalizes leading slashes', () => {

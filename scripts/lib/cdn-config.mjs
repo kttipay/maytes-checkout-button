@@ -26,10 +26,6 @@ export function majorPath(version, sourceName) {
   return `/v${major}/${sourceName}`;
 }
 
-export function majorUrl(version, sourceName) {
-  return cdnUrl(majorPath(version, sourceName));
-}
-
 export function buildCdnConfig(releases) {
   const current = releases[0];
 

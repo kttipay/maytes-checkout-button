@@ -2,11 +2,11 @@
 
 > Decision record + reasoning. Captures the recurring question of how merchants consume the SDK from the CDN: development evergreen vs production pins, and pinned files named by content-hash vs SemVer (e.g. `js.maytes.co/v1.0.0/checkout-button.js`).
 
-**Current scheme (the conclusion):** production is recommended to use the evergreen major channel (`js.maytes.co/v1/checkout-button.js`, no SRI possible); pinning by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI, remains fully supported for merchants who'd rather freeze on a tested build. `js.maytes.co/dev/checkout-button.js` is a rolling, short-cached channel for development and staging only. The rest of this doc is the reasoning the recommendation trades off, and why the team chose evergreen anyway.
+**Current scheme (the conclusion):** production is recommended to use the evergreen major channel (`js.maytes.co/v1/checkout-button.js`, no SRI possible); pinning by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI, remains fully supported for merchants who'd rather freeze on a tested build. `js.maytes.co/dev/checkout-button.js` tracks the `dev` git branch's live build, for internal pre-merge testing only — not a merchant channel. The rest of this doc is the reasoning the recommendation trades off, and why the team chose evergreen anyway.
 
 ## Two independent axes
 
-1. **Channel** — a three-way choice: the development-only rolling `/dev/`, the evergreen production channel `/v<major>/` (the recommendation), or an exact production pin.
+1. **Channel** — a three-way choice: the internal-only `/dev/` (tracks the `dev` branch), the evergreen production channel `/v<major>/` (the recommendation), or an exact production pin.
 2. **Pinned-file naming** — content-hash (`checkout-button.<sha256>.js`) vs semver (`checkout-button-0.1.0.js`).
 
 ## What others actually ship
@@ -39,7 +39,7 @@ A content-hash filename is immutable **by construction** (the name is derived fr
 - **Default for production: evergreen** — `https://js.maytes.co/v1/checkout-button.js` (no SRI possible, ~5 min cache). Always the newest `1.x` release; no per-merchant action needed to get an update. Not a hot-fix mechanism — a fix ships the same way either way (a new release) — and not a substitute for shipping fixes promptly to merchants who are pinned.
 - **Pinned + SRI, for merchants who want the guarantee instead** — `https://js.maytes.co/v1.0.0/checkout-button.js` or `https://js.maytes.co/checkout-button.<sha256>.js`. Stable for the merchant, caches a year, protected with SRI. The merchant picks a version from the release notes, which map each version to its SemVer path, hashed file, and SRI.
   - **Hash remains the strongest byte-level pin.** The hash is a fingerprint of the bytes, so the URL can never silently serve different code. The SemVer path is a readable release pin and must be used with SRI.
-- **Development-only rolling channel** — `https://js.maytes.co/dev/checkout-button.js` (short cache) for internal dev/staging and merchant test environments that explicitly want auto-updates. Do not use it in production.
+- **Internal dev-branch channel** — `https://js.maytes.co/dev/checkout-button.js` mirrors the `dev` git branch's latest pushed build, deployed via a Cloudflare Pages preview (isolated from the production deployment). For pre-merge testing only, not for merchants; may be broken or mid-development at any time.
 - **Semver stays the human source of truth** — npm version, changelog, GitHub Releases — each mapped to its hashed file + SRI.
 
 ### Back pocket: a readable semver URL, if ever wanted
@@ -54,6 +54,6 @@ It's semver, **immutable for free** (npm forbids re-publishing a version), and S
 
 ## Status
 
-- **Implemented:** IIFE minification; the rolling `/dev/` channel, self-hosted SemVer aliases, hashed files, and SRI generation all exist.
+- **Implemented:** IIFE minification; the `dev`-branch `/dev/` channel, self-hosted SemVer aliases, hashed files, and SRI generation all exist.
 - **Decision:** production is recommended to use `/v1/` evergreen. Pinned SemVer or hash URLs with SRI remain fully supported as the documented fallback for merchants who prioritize pin-safety over auto-updates.
 - **Caveat to honour:** if card fields ever move in-browser, this SDK would inherit Stripe's actual hot-patch constraint — at that point evergreen stops being a convenience choice and becomes closer to a requirement, same as it is for Stripe.

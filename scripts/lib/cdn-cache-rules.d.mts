@@ -1,8 +1,14 @@
+export interface CacheRuleStatusCodeOverride {
+  statusCode: number;
+  ttl: number;
+}
+
 export interface CacheRule {
   id: string;
   expression: string;
   edgeTtl: number;
   browserTtl: number;
+  edgeTtlStatusCodeOverrides?: CacheRuleStatusCodeOverride[];
 }
 
 export const SEMVER_PIN_WILDCARD: string;

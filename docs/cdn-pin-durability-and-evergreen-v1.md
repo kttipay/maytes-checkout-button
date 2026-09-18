@@ -40,10 +40,12 @@ Cloudflare Pages caps `_headers` at **100 rules total**. The original version of
 
 **Fix:** stop declaring Cache-Control in the generated `_headers` file for anything release-shaped. Instead, provision exactly **2 fixed Cloudflare Ruleset Engine Cache Rules**, matched by regex against the URL shape rather than enumerated per release, via the Cloudflare API:
 
-1. `http.host eq "js.maytes.co"` and (`^/v[0-9]+\.[0-9]+\.[0-9]+/` **or** `^/checkout-button\.[0-9a-f]{8}\.`) → `Cache-Control: public, max-age=31536000, immutable`
+1. `http.host eq "js.maytes.co"` and (`^/v[0-9]+\.[0-9]+\.[0-9]+/` **or** `^/checkout-button\.[0-9a-f]{8}\.`) → `Cache-Control: public, max-age=31536000` (edge + browser TTL both one year)
 2. `http.host eq "js.maytes.co"` and `^/v[0-9]+/` → `Cache-Control: public, max-age=300`
 
 Both rules are scoped to the `js.maytes.co` host explicitly — the zone (`maytes.co`) may serve other hostnames, and a path-only match could otherwise apply this Cache-Control to an unrelated route on another subdomain.
+
+**Live-verified limitation:** the Ruleset Engine's `set_cache_settings` action has no field for the literal `immutable` directive — `action_parameters.cache_control_directives` (what an earlier draft of this design assumed) is rejected outright (`"invalid JSON: unknown field \"cache_control_directives\""`, confirmed against the real `maytes.co` zone). Pins get `max-age=31536000` via `edge_ttl`/`browser_ttl` only, not the `immutable` token. Functionally this is close (nothing revalidates before a year passes either way), but delivering `immutable` literally would need a separate Response Header Transform Rule (`http_response_headers` phase) layered on top — not implemented here; a follow-up if it's ever worth the extra API call.
 
 These 2 rules cover every release that has ever shipped or ever will, with zero growth. `_headers` goes back to just the fixed, non-growing set: `/*` (global security/CORS headers), `${DEV_CHANNEL_PREFIX}/*`, `/integrity.json` — 3 rules, forever.
 

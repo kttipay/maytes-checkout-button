@@ -22,7 +22,6 @@ function toApiRule(rule) {
       cache: true,
       edge_ttl: { mode: 'override_origin', default: rule.edgeTtl },
       browser_ttl: { mode: 'override_origin', default: rule.browserTtl },
-      ...(rule.immutable ? { cache_control_directives: { immutable: true } } : {}),
     },
   };
 }
@@ -33,7 +32,6 @@ function fromApiRule(apiRule) {
     expression: apiRule.expression,
     edgeTtl: apiRule.action_parameters?.edge_ttl?.default,
     browserTtl: apiRule.action_parameters?.browser_ttl?.default,
-    immutable: Boolean(apiRule.action_parameters?.cache_control_directives?.immutable),
   };
 }
 

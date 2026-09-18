@@ -5,6 +5,12 @@ describe('CACHE_RULES', () => {
   it('defines exactly 2 fixed rules', () => {
     expect(CACHE_RULES).toHaveLength(2);
   });
+
+  it('scopes every rule to the js.maytes.co host', () => {
+    for (const rule of CACHE_RULES) {
+      expect(rule.expression).toContain('http.host eq "js.maytes.co"');
+    }
+  });
 });
 
 describe('rulesetNeedsUpdate', () => {

@@ -86,4 +86,52 @@ describe('overlay attachment', () => {
       }
     }
   });
+
+  it('removes the overlay from the parent document when this frame is navigated away', () => {
+    const parentDoc = document.implementation.createHTMLDocument('parent');
+    const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
+    Object.defineProperty(window, 'top', {
+      configurable: true,
+      get: () => ({ document: parentDoc } as unknown as Window),
+    });
+    try {
+      showOverlay(state);
+      expect(parentDoc.querySelector('[data-maytes-overlay]')).not.toBeNull();
+      window.dispatchEvent(new Event('pagehide'));
+      expect(parentDoc.querySelector('[data-maytes-overlay]')).toBeNull();
+      expect(parentDoc.head.querySelector('style[data-maytes-checkout-button-overlay-styles]')).toBeNull();
+      expect(state.overlayEl).toBeNull();
+    } finally {
+      if (originalTop !== undefined) {
+        Object.defineProperty(window, 'top', originalTop);
+      } else {
+        Object.defineProperty(window, 'top', { configurable: true, get: () => window });
+      }
+    }
+  });
+
+  it('stops listening for pagehide once the overlay is hidden', () => {
+    const parentDoc = document.implementation.createHTMLDocument('parent');
+    const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
+    Object.defineProperty(window, 'top', {
+      configurable: true,
+      get: () => ({ document: parentDoc } as unknown as Window),
+    });
+    try {
+      showOverlay(state);
+      hideOverlay(state);
+      showOverlay(state);
+      const second = parentDoc.querySelector('[data-maytes-overlay]');
+      expect(second).not.toBeNull();
+      window.dispatchEvent(new Event('pagehide'));
+      expect(parentDoc.querySelector('[data-maytes-overlay]')).toBeNull();
+      expect(state.overlayEl).toBeNull();
+    } finally {
+      if (originalTop !== undefined) {
+        Object.defineProperty(window, 'top', originalTop);
+      } else {
+        Object.defineProperty(window, 'top', { configurable: true, get: () => window });
+      }
+    }
+  });
 });

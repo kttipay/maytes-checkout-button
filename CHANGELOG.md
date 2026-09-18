@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+- [#16](https://github.com/kttipay/maytes-checkout-button/pull/16) [`e0bd228`](https://github.com/kttipay/maytes-checkout-button/commit/e0bd228f454979c6dd41587cb0e82e9fe735a888) Thanks [@kttipaydiogocavaiar](https://github.com/kttipaydiogocavaiar)! - The popup loading overlay no longer outlives the frame that opened it. When the button runs inside a same-origin iframe, the "Completing checkout with Maytes…" dialog is mounted in the top-level document so it covers the whole merchant page, but only the frame's SDK instance could remove it. The hosted checkout's back, cancel and return exits navigate `window.opener`, which is that frame, so the frame's document was replaced, its popup poll died, and the merchant page stayed covered by a modal dialog with the button unreachable. The overlay now also listens for the frame's `pagehide` and removes itself from the top-level document when the frame navigates away.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-dfHU/wrTbetBPk5TdX9haImZAq87uFVrlMKMSept0sgtIbTqdYWQi2ml8BF6Gq8N
+checkout-button.mjs  sha384-JKjUqX0jqi7UoqqNYGlD97mTCeR0ZshbiLtXhfPQl2w5mQtfmBx+X7W95SjjmkkY
+checkout-button.cjs  sha384-oSekYX0Re0jdMsBU6uzxUedTM+Cnl8uF5y0wmZmjUHngtzr8Sdze1MrOSYkGXKJ3
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.1.1/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.1.1/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.1.1/checkout-button.cjs)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.4b780d52.js](https://js.maytes.co/checkout-button.4b780d52.js)
+- [checkout-button.aed57a66.mjs](https://js.maytes.co/checkout-button.aed57a66.mjs)
+- [checkout-button.2aad12c3.cjs](https://js.maytes.co/checkout-button.2aad12c3.cjs)
+
+<!-- @hash-sri-end -->
 ## 1.1.0
 
 ### Minor Changes
@@ -31,6 +60,7 @@ checkout-button.cjs  sha384-4c1JuweT47cnpvGlQfv+qQw/3CS+7o2/Dg4qQnLiWM1GDChhHQo0
 - [checkout-button.178d8394.cjs](https://js.maytes.co/checkout-button.178d8394.cjs)
 
 <!-- @hash-sri-end -->
+
 ## 1.0.1
 
 ### Patch Changes

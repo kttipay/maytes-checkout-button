@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- [#11](https://github.com/kttipay/maytes-checkout-button/pull/11) [`def33e0`](https://github.com/kttipay/maytes-checkout-button/commit/def33e010bf23b11bc94871e236d35a65deb825e) Thanks [@kos-maytes](https://github.com/kos-maytes)! - `renderButton`'s default `mode` is now `'popup'` instead of `'redirect'`. Pass `mode: 'redirect'` explicitly to keep the previous same-window navigation behavior. Popup mode already falls back to same-window redirect on mobile viewports and when the popup is blocked, so this only changes the desktop no-`mode`-specified path.
+
+- [#8](https://github.com/kttipay/maytes-checkout-button/pull/8) [`a6d85e2`](https://github.com/kttipay/maytes-checkout-button/commit/a6d85e23653e340b7a850ad61e882ec2f6cef5d2) Thanks [@kttipaydiogocavaiar](https://github.com/kttipaydiogocavaiar)! - The button never loads the hosted checkout inside an iframe any more. When the button is rendered inside a frame (for example a booking widget embedded on the merchant's page), a phone or a narrow frame used to take the same-window fallback and navigate the frame itself, so the checkout ran as a cross-site iframe where its session cookie is rejected and sign-in ended on "Your session expired". The button now measures the top-level window (or the screen when the top window is cross-origin) and navigates the top-level window; if the browser refuses, it opens the checkout in a new tab; if both are refused, it dispatches `maytes:checkout-failed` with `reason: 'navigation-blocked'` and leaves the button usable. `maytes:checkout-redirected` now carries `detail.target` (`'self' | 'top' | 'tab'`). `redirectToCheckout()` follows the same rule and throws `MaytesError` when it cannot leave the frame. Merchants who deliberately relied on in-frame navigation will see the top-level page change instead; render the button in the top-level page if that is not wanted.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-+hQ9khxZbVEUhR685659hqmPyN/3RYfbNEI7itac3SkcyYor/94/0mIwVnVwMa8M
+checkout-button.mjs  sha384-1areqNcTs9sephTl6S1+sOgACv1/NqIqXBG0Ej11/4OfSDcN92GvQvhhu4K76R5i
+checkout-button.cjs  sha384-4c1JuweT47cnpvGlQfv+qQw/3CS+7o2/Dg4qQnLiWM1GDChhHQo0dT+z8705Hy50
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.1.0/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.1.0/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.1.0/checkout-button.cjs)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.811263f9.js](https://js.maytes.co/checkout-button.811263f9.js)
+- [checkout-button.f96c49ee.mjs](https://js.maytes.co/checkout-button.f96c49ee.mjs)
+- [checkout-button.178d8394.cjs](https://js.maytes.co/checkout-button.178d8394.cjs)
+
+<!-- @hash-sri-end -->
 ## 1.0.1
 
 ### Patch Changes
@@ -29,6 +60,7 @@ checkout-button.cjs  sha384-+O2S6KfO4Pc0VEvL+kTsFzxU14W4EILV6+U5mAdW8X43Xm8Qk1aV
 - [checkout-button.6d259930.cjs](https://js.maytes.co/checkout-button.6d259930.cjs)
 
 <!-- @hash-sri-end -->
+
 ## 1.0.0
 
 First public release on npm.

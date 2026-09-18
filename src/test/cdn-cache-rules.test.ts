@@ -4,6 +4,7 @@ import {
   EVERGREEN_WILDCARD,
   HASH_PIN_WILDCARD,
   SEMVER_PIN_WILDCARD,
+  UNHASHED_BUNDLE_PATHS,
   rulesetNeedsUpdate,
 } from '../../scripts/lib/cdn-cache-rules.mjs';
 
@@ -13,6 +14,13 @@ function wildcardMatches(pattern: string, path: string): boolean {
     .map((segment) => segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
     .join('.*');
   return new RegExp(`^${escaped}$`).test(path);
+}
+
+function matchesImmutablePinRule(path: string): boolean {
+  return (
+    wildcardMatches(SEMVER_PIN_WILDCARD, path) ||
+    (wildcardMatches(HASH_PIN_WILDCARD, path) && !UNHASHED_BUNDLE_PATHS.includes(path))
+  );
 }
 
 describe('CACHE_RULES', () => {
@@ -49,6 +57,29 @@ describe('wildcard pattern disambiguation', () => {
 
   it('also matches a pinned SemVer path against the evergreen pattern alone, which is why rule 2 excludes rule 1', () => {
     expect(wildcardMatches(EVERGREEN_WILDCARD, '/v1.0.1/checkout-button.js')).toBe(true);
+  });
+});
+
+describe('immutable-pins rule composition (wildcard + unhashed-bundle exclusion)', () => {
+  it('matches genuinely content-hashed bundle and map files', () => {
+    expect(matchesImmutablePinRule('/checkout-button.8c71493e.js')).toBe(true);
+    expect(matchesImmutablePinRule('/checkout-button.8c71493e.js.map')).toBe(true);
+  });
+
+  it('matches pinned SemVer paths', () => {
+    expect(matchesImmutablePinRule('/v1.0.1/checkout-button.js')).toBe(true);
+  });
+
+  it('does not match the bare unhashed bundle files', () => {
+    expect(matchesImmutablePinRule('/checkout-button.js')).toBe(false);
+    expect(matchesImmutablePinRule('/checkout-button.mjs')).toBe(false);
+    expect(matchesImmutablePinRule('/checkout-button.cjs')).toBe(false);
+  });
+
+  it('does not match the bare unhashed bundle files own source maps', () => {
+    expect(matchesImmutablePinRule('/checkout-button.js.map')).toBe(false);
+    expect(matchesImmutablePinRule('/checkout-button.mjs.map')).toBe(false);
+    expect(matchesImmutablePinRule('/checkout-button.cjs.map')).toBe(false);
   });
 });
 

@@ -39,6 +39,7 @@ A content-hash filename is immutable **by construction** (the name is derived fr
 - **Default for production: pinned + SRI** — `https://js.maytes.co/v1.0.0/checkout-button.js` or `https://js.maytes.co/checkout-button.<sha256>.js`. Stable for the merchant, caches a year, and can be protected with SRI. The merchant picks a version from the release notes, which map each version to its SemVer path, hashed file, and SRI.
   - **Hash remains the strongest byte-level pin.** The hash is a fingerprint of the bytes, so the URL can never silently serve different code. The SemVer path is a readable release pin and must be used with SRI.
 - **Development-only rolling channel** — `https://js.maytes.co/dev/checkout-button.js` (short cache) for internal dev/staging and merchant test environments that explicitly want auto-updates. Do not use it in production.
+- **Opt-in evergreen for production (added 2026-09-18)** — `https://js.maytes.co/v1/checkout-button.js` (no SRI possible, ~5 min cache), for merchants who explicitly want to trade the pin-safety guarantee for automatic updates within a major version. Not the default, not promoted as the primary integration path, and — see "Revisited" below — **not a substitute for shipping fixes promptly to pinned merchants.**
 - **Semver stays the human source of truth** — npm version, changelog, GitHub Releases — each mapped to its hashed file + SRI.
 
 ### Back pocket: a readable semver URL, if ever wanted
@@ -51,8 +52,19 @@ https://cdn.jsdelivr.net/npm/@maytes/checkout-button@1.0.0/dist/checkout-button.
 
 It's semver, **immutable for free** (npm forbids re-publishing a version), and SRI-able — the same guarantee a self-hosted `…-0.1.0.js` would *not* have. The reason Adyen/Braintree/unpkg can safely put a version in the URL is precisely that they're npm-backed; our self-hosted CDN isn't, which is why we hash there.
 
+## Revisited (2026-09-18): an opt-in `/v1/` was added
+
+The reasoning above still holds as the *default*: this SDK doesn't touch card data, so it doesn't inherit Stripe's hot-patch constraint, and pinning remains correct for merchants who don't ask for anything else.
+
+What changed: there's demand for an auto-updating option from merchants who'd rather take the auto-update trade explicitly. Two things worth being explicit about, because the first draft of this change conflated them:
+
+- **This does not solve "we shipped a bug and want every merchant fixed right now."** Merchants who already have a bad build are pinned to a specific SemVer or hash URL — `/v1/` doesn't exist for them until they change their `<script>` tag, and changing it to `/v1/` is no faster than changing it to the next pinned version. An urgent fix still ships the way it always did: cut a patch release, tell pinned merchants to bump.
+- **`/v1/` reintroduces the exact blast-radius risk this doc warns about, for whoever opts in.** A bad release on `/v1/` reaches every merchant on it simultaneously, with no per-merchant rollback, the same failure mode Adyen/Braintree-style pinning was chosen to avoid. It's offered as an explicit, documented trade a merchant can choose — not as a safer default, and not as an incident-response tool.
+
+See `docs/cdn-pin-durability-and-evergreen-v1.md` for the implementation design, including the mechanism that makes `/v1/` (and, incidentally, every historical SemVer/hash pin) survive across future releases.
+
 ## Status
 
 - **Implemented:** IIFE minification; the rolling `/dev/` channel, self-hosted SemVer aliases, hashed files, and SRI generation all exist.
-- **Decision:** production uses pinned SemVer or hash URLs with SRI. Evergreen is development/staging only.
-- **Caveat to honour:** this default holds **as long as the SDK stays a redirect/popup button.** If card fields ever move in-browser, revisit toward evergreen (you'd inherit Stripe's hot-patch constraint).
+- **Decision:** production defaults to pinned SemVer or hash URLs with SRI. `/v1/` evergreen exists as an explicit opt-in (see "Revisited" above) — it is not the recommended default and is not a hot-fix mechanism.
+- **Caveat to honour:** the pin-by-default *recommendation* holds **as long as the SDK stays a redirect/popup button.** If card fields ever move in-browser, revisit toward evergreen-by-default — that's Stripe's actual constraint, which this SDK still doesn't have.

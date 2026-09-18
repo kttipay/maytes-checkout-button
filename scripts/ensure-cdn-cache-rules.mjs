@@ -22,10 +22,8 @@ function browserMaxAge(cacheControl) {
 }
 
 const getResponse = await fetch(rulesetUrl, { headers: requestHeaders });
-const getBody = await getResponse.json();
-
 const currentRules = getResponse.ok
-  ? getBody.result.rules.map((rule) => ({
+  ? (await getResponse.json()).result.rules.map((rule) => ({
       id: rule.description,
       expression: rule.expression,
       cacheControl: `public, max-age=${rule.action_parameters?.browser_ttl?.default ?? 0}`,

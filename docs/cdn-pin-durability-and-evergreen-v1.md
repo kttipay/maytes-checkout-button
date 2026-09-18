@@ -45,7 +45,7 @@ Cloudflare Pages caps `_headers` at **100 rules total**. The original version of
 
 These 2 rules cover every release that has ever shipped or ever will, with zero growth. `_headers` goes back to just the fixed, non-growing set: `/*` (global security/CORS headers), `${DEV_CHANNEL_PREFIX}/*`, `/integrity.json` — 3 rules, forever.
 
-**New file:** `scripts/ensure-cdn-cache-rules.mjs` — idempotent, run once per deploy (before or after `wrangler pages deploy`, order doesn't matter since these rules are zone-level, not deployment-scoped): calls the Cloudflare API to read the current ruleset for the zone, and PUTs the 2 rules above only if they differ from what's already configured.
+**New file:** `scripts/ensure-cdn-cache-rules.mjs` — idempotent, run once per deploy, before `wrangler pages deploy` — the rules are zone-level rather than deployment-scoped, so ordering is not a correctness requirement, but running first means a provisioning failure aborts the deploy instead of leaving freshly published pins served without their immutable cache rule. It calls the Cloudflare API to read the current ruleset for the zone, preserves every rule it doesn't own, and PUTs its own 2 rules above only if they differ from what's already configured.
 
 **Prerequisites not yet in place, confirm before implementing:**
 - `CLOUDFLARE_API_TOKEN` needs Cache Rules / Ruleset Engine write scope, in addition to whatever Pages-deploy scope it already has — a token scoped to only "Pages: Edit" cannot manage zone-level Cache Rules.
@@ -60,7 +60,7 @@ These 2 rules cover every release that has ever shipped or ever will, with zero 
 | `scripts/lib/semver-lite.d.mts` *(new)* | Type decl for the above. |
 | `scripts/lib/changelog.mjs` | Add `extractSriRecords(changelogContent): Map<version, Record<sourceName, sri>>` — parses every `## <version>` section's existing `<!-- @hash-sri-start -->` block. This is the file that already owns CHANGELOG block parsing. |
 | `scripts/rehydrate-cdn-history.mjs` *(new)* | I/O shell described below. |
-| `scripts/lib/cdn-config.mjs` | `majorPath`/`majorUrl` added; `buildCdnConfig(releases: Release[])` replaces `buildCdnConfig(integrity)` — now emits `_redirects` per release plus the fixed 3-rule `_headers` (no more per-release Cache-Control blocks). |
+| `scripts/lib/cdn-config.mjs` | `majorPath` added; `buildCdnConfig(releases: Release[])` replaces `buildCdnConfig(integrity)` — now emits `_redirects` per release plus the fixed 3-rule `_headers` (no more per-release Cache-Control blocks). |
 | `scripts/lib/cdn-config.d.mts` | Updated signature + new exports. |
 | `scripts/cdn-config.mjs` | Reads `dist/_releases-manifest.json` (falls back to `[dist/integrity.json]` if absent, so local `npm run cdn-config` still works without `gh` auth). |
 | `scripts/ensure-cdn-cache-rules.mjs` *(new)* | Idempotently provisions the 2 fixed Cache Rules via the Cloudflare API — see "Why cache-control moves to Cloudflare Cache Rules" below. |

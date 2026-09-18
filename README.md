@@ -75,7 +75,7 @@ This URL has no `integrity` attribute, and can't have one: it moves to whichever
 Content-Security-Policy: script-src 'self' https://js.maytes.co;
 ```
 
-This isn't a way to get bug fixes faster than pinning — a fix ships the same way either way (a new release), and if you're pinned, bumping your pin to the new version is exactly as fast as staying on `/v1/` would have been. What you're actually trading is safety: on `/v1/`, a bad release reaches you the moment it ships, with no way to stay back on the last good build. `https://js.maytes.co/integrity.json` always reflects whatever `/v1/` currently serves, if you want to poll it and alert on unexpected changes yourself.
+This isn't a way to get bug fixes faster than pinning — a fix ships the same way either way (a new release), and if you're pinned, bumping your pin to the new version is exactly as fast as staying on `/v1/` would have been. What you're actually trading is safety: on `/v1/`, a bad release reaches you the moment it ships, with no way to stay back on the last good build. While `1.x` is the newest major, `https://js.maytes.co/integrity.json` reflects whatever `/v1/` currently serves, if you want to poll it and alert on unexpected changes yourself — it describes the newest release only, so once a `2.0.0` ships it stops describing `/v1/` (which stays on the last `1.x`).
 
 `/v1/` only ever tracks `1.x`. When a breaking `2.0.0` ships, `/v1/` keeps resolving to the last `1.x` release rather than disappearing or jumping to `2.x` — move to `/v2/checkout-button.js` explicitly when you're ready.
 

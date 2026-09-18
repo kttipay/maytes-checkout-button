@@ -23,17 +23,18 @@ Three bundle formats ship from `dist/`:
 
 The IIFE (CDN) bundle ships minified with a sourcemap; the ESM/CJS (npm) bundles ship unminified so the consumer's bundler can minify them.
 
-Each release is served from `https://js.maytes.co` under three URL forms:
+Each release is served from `https://js.maytes.co` under four URL forms:
 
 | Form | Example | Cache | SRI |
 |---|---|---|---|
 | SemVer pin | `/v<version>/checkout-button.js` | 1 yr, immutable | yes |
 | Content-hash pin | `/checkout-button.<8-char-sha256>.js` | 1 yr, immutable | yes |
-| Rolling | `/dev/checkout-button.js` | ~5 min | no (bytes roll) |
+| Rolling (dev only) | `/dev/checkout-button.js` | ~5 min | no (bytes roll) |
+| Evergreen major (opt-in) | `/v<major>/checkout-button.js` | ~5 min | no (bytes roll) |
 
-Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; track `/dev/` only for development / staging auto-updates. There is no `/v1/`-style evergreen major channel. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
+Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; track `/dev/` only for development / staging auto-updates. An opt-in `/v1/`-style evergreen major channel also exists for merchants who explicitly choose auto-updates over the pin-safety guarantee — see [`cdn-versioning.md`](./cdn-versioning.md) and [`cdn-pin-durability-and-evergreen-v1.md`](./cdn-pin-durability-and-evergreen-v1.md) for the reasoning and the implementation design. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
 
-CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`; `scripts/cdn-config.mjs` emits the `_headers`/`_redirects` — exact-path immutable cache for the SemVer/hash pins, short-cache for the `/dev/*` alias, plus CORS.
+CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`. `scripts/cdn-config.mjs` emits `_headers` — the fixed global/security headers plus CORS, the short-cached `/dev/*` alias, and `/integrity.json` — and `_redirects`, which rewrites every release's SemVer and evergreen paths onto its hashed bundle. `Cache-Control` for the pins and the evergreen alias comes from Cloudflare Cache Rules, provisioned by `scripts/ensure-cdn-cache-rules.mjs`, not from `_headers`.
 
 ## Public API
 
@@ -252,5 +253,5 @@ The button hands off only to the merchant's `return_url` / `cancel_url` — it n
 
 ## Deferred / known follow-ups
 
-- **CDN: live.** Cloudflare Pages project `checkout-button` is deployed at `https://js.maytes.co` (release workflow + `scripts/cdn-config.mjs`). `/dev/<bundle>` aliases the unhashed names for development auto-updates; `/v<version>/<bundle>` aliases each release's hashed bundle; hashed filenames are immutable.
+- **CDN: live.** Cloudflare Pages project `checkout-button` is deployed at `https://js.maytes.co` (release workflow + `scripts/cdn-config.mjs`). `/dev/<bundle>` aliases the unhashed names for development auto-updates; `/v<version>/<bundle>` aliases each release's hashed bundle; hashed filenames are immutable. Every historical release's pins now persist across later releases — before this, shipping a new release 404'd the previous ones — and `/v<major>/<bundle>` serves the newest release in that major as an opt-in evergreen alias.
 - **`onComplete` request.** If we ever need an in-page completion signal for analytics, the right design is `BroadcastChannel` between the checkout tab and the merchant tab — *not* re-adding callbacks (they'd be unreachable in the canonical same-tab flow).

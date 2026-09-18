@@ -2,11 +2,11 @@
 
 > Decision record + reasoning. Captures the recurring question of how merchants consume the SDK from the CDN: development evergreen vs production pins, and pinned files named by content-hash vs SemVer (e.g. `js.maytes.co/v1.0.0/checkout-button.js`).
 
-**Current scheme (the conclusion):** production pins by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI. `js.maytes.co/dev/checkout-button.js` is a rolling, short-cached channel for development and staging only. There is no `/v1/`-style evergreen major channel. The rest of this doc is the reasoning behind that.
+**Current scheme (the conclusion):** production pins by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI. `js.maytes.co/dev/checkout-button.js` is a rolling, short-cached channel for development and staging only. An evergreen major channel (`js.maytes.co/v1/checkout-button.js`) exists as an explicit opt-in, not as the default — see "Revisited" below for that reasoning. The rest of this doc is the reasoning behind all of it.
 
 ## Two independent axes
 
-1. **Channel** — development evergreen `/dev/` vs an exact production pin.
+1. **Channel** — a three-way choice: the development-only rolling `/dev/`, an exact production pin (the default), or the opt-in production evergreen `/v<major>/`.
 2. **Pinned-file naming** — content-hash (`checkout-button.<sha256>.js`) vs semver (`checkout-button-0.1.0.js`).
 
 ## What others actually ship

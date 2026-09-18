@@ -48,6 +48,13 @@ describe('checkTagCoverage', () => {
     expect(checkTagCoverage({ tagCount: 0, changelogVersionCount: 1 }).ok).toBe(true);
   });
 
+  it('fails at the threshold when CHANGELOG has 2+ versions but no tags', () => {
+    const result = checkTagCoverage({ tagCount: 0, changelogVersionCount: 2 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.message).toContain('fetch-tags');
+  });
+
   it('fails when CHANGELOG has history but no tags were fetched', () => {
     const result = checkTagCoverage({ tagCount: 0, changelogVersionCount: 3 });
     expect(result.ok).toBe(false);

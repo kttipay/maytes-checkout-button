@@ -60,6 +60,25 @@ The real version, hash, and SRI for each release live in [`CHANGELOG.md`](./CHAN
 
 Use a pinned URL in every environment, development included — pinning is what makes the bytes you tested the bytes your shoppers get.
 
+### Evergreen (auto-updating) URL
+
+Pinning (above) is the default and the recommended choice for production. If you'd rather trade that guarantee for automatic updates — accepting that a bad release reaches you immediately, with no ability to stay on a known-good build — use the major-version alias instead:
+
+```html
+<script src="https://js.maytes.co/v1/checkout-button.js"
+        crossorigin="anonymous"></script>
+```
+
+This URL has no `integrity` attribute, and can't have one: it moves to whichever `1.x` release is newest (~5 minute edge cache), so the bytes behind it change without notice. Restrict which origins your page trusts via CSP instead of a content hash:
+
+```
+Content-Security-Policy: script-src 'self' https://js.maytes.co;
+```
+
+This isn't a way to get bug fixes faster than pinning — a fix ships the same way either way (a new release), and if you're pinned, bumping your pin to the new version is exactly as fast as staying on `/v1/` would have been. What you're actually trading is safety: on `/v1/`, a bad release reaches you the moment it ships, with no way to stay back on the last good build. `https://js.maytes.co/integrity.json` always reflects whatever `/v1/` currently serves, if you want to poll it and alert on unexpected changes yourself.
+
+`/v1/` only ever tracks `1.x`. When a breaking `2.0.0` ships, `/v1/` keeps resolving to the last `1.x` release rather than disappearing or jumping to `2.x` — move to `/v2/checkout-button.js` explicitly when you're ready.
+
 ### npm
 
 ```bash

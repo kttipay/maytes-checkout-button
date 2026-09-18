@@ -59,6 +59,7 @@ jobs:
             --repo "${{ github.repository }}" --clobber
 
       - name: Cache CDN release history
+        if: steps.changesets.outputs.published == 'true'
         uses: actions/cache@v4
         with:
           path: .cdn-history-cache
@@ -80,8 +81,8 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
           node scripts/cdn-config.mjs
-          npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
           node scripts/ensure-cdn-cache-rules.mjs
+          npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
 
   cdn-deploy:
     if: github.event_name == 'workflow_dispatch'
@@ -123,8 +124,8 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
           node scripts/cdn-config.mjs
-          npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
           node scripts/ensure-cdn-cache-rules.mjs
+          npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
       - name: Backfill release assets for the current version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

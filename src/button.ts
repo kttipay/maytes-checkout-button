@@ -162,7 +162,7 @@ export function renderButton(
 
   const label = options.label ?? 'Split with';
   const block = options.block === true;
-  const mode: RenderButtonMode = options.mode ?? 'redirect';
+  const mode: RenderButtonMode = options.mode ?? 'popup';
   if (mode !== 'redirect' && mode !== 'popup') {
     throw new MaytesError(
       MaytesErrorCode.Config,

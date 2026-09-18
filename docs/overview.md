@@ -7,7 +7,7 @@
 A small TypeScript library that merchants drop onto their checkout page. `Maytes(...)` is a callable factory (Stripe-style) — each call returns an isolated SDK instance:
 
 - `createCheckout` — a closure the merchant supplies that mints a Maytes checkout on their backend; the button awaits it on click.
-- `renderButton(container, options?)` — render a "Split with Maytes" pill into the page; on click it invokes the closure and navigates to the Maytes-hosted checkout. Default mode is same-window redirect; `mode: 'popup'` opens a centered popup on desktop and auto-falls back to redirect on mobile or when blocked.
+- `renderButton(container, options?)` — render a "Split with Maytes" pill into the page; on click it invokes the closure and navigates to the Maytes-hosted checkout. Default mode opens a centered popup on desktop and auto-falls back to redirect on mobile or when blocked; `mode: 'redirect'` opts into a same-window redirect always.
 
 The merchant's page never embeds the Maytes flow — it opens the hosted checkout and reads authoritative state back via the merchant's `return_url` / `cancel_url` and via webhooks.
 
@@ -59,7 +59,7 @@ type RenderButtonMode = 'redirect' | 'popup';
 interface RenderButtonOptions {
   label?: string;   // default: 'Split with'
   block?: boolean;  // default: false (inline pill); true for full-width
-  mode?: RenderButtonMode;  // default: 'redirect' — 'popup' opens a centered window (auto-falls back to redirect on mobile or when blocked)
+  mode?: RenderButtonMode;  // default: 'popup' — opens a centered window (auto-falls back to redirect on mobile or when blocked); 'redirect' opts into same-window navigation always
 }
 
 // Factory — each call returns an isolated instance:
@@ -101,11 +101,7 @@ sequenceDiagram
   API-->>MerchantBE: { checkout_uuid }
   MerchantBE-->>Button: { checkoutId }
 
-  alt default mode (redirect), mobile, or blocked popup
-    Button->>Page: dispatchEvent("maytes:checkout-redirected", { url })
-    Button->>Page: location.href = hosted checkout URL
-    Note over Page: Hosted checkout loads in the current window.<br/>The SDK page lifecycle ends here.
-  else mode: "popup" on desktop
+  alt default mode (popup) on desktop
     Button->>Popup: window.open("about:blank", "maytes-checkout-*", 500x800)
     Button->>Popup: Paint branded loading screen
     Button->>Overlay: showModal() — dark backdrop, Maytes logo, "Completing checkout…"
@@ -123,6 +119,10 @@ sequenceDiagram
     Button->>Overlay: close() + remove from DOM
     Button->>Button: aria-disabled removed
     Button->>Page: dispatchEvent("maytes:checkout-closed")
+  else mode: "redirect", mobile, or blocked popup
+    Button->>Page: dispatchEvent("maytes:checkout-redirected", { url })
+    Button->>Page: location.href = hosted checkout URL
+    Note over Page: Hosted checkout loads in the current window.<br/>The SDK page lifecycle ends here.
   end
 
   Note over Page: Merchant's return_url page (server-rendered) is authoritative.<br/>Webhooks are source of truth.
@@ -130,7 +130,7 @@ sequenceDiagram
 
 The merchant page never receives a structured callback for completion — they observe `maytes:checkout-opened`, `maytes:checkout-closed`, `maytes:checkout-redirected`, and `maytes:checkout-failed` `CustomEvent`s on `document` for UI state, and use their own `return_url` / `cancel_url` + webhooks as the authoritative outcome channel. The `failed` event carries `event.detail.reason` of `'create-checkout-rejected'` | `'invalid-shape'` plus `event.detail.cause` where available. The `redirected` event carries `event.detail.url`.
 
-In `mode: 'popup'` the button opens a blank popup synchronously on click (so the browser attributes it to the user gesture), paints a branded Maytes loading screen into it, then `popup.location.replace(url)`s to the hosted checkout once `createCheckout` resolves. On mobile viewports the popup model behaves as a same-window redirect. If the popup is blocked (or mode is the default `'redirect'`), the button navigates the current window via `location.href` and dispatches `maytes:checkout-redirected` — this is a normal outcome, not a failure.
+In the default `mode: 'popup'`, the button opens a blank popup synchronously on click (so the browser attributes it to the user gesture), paints a branded Maytes loading screen into it, then `popup.location.replace(url)`s to the hosted checkout once `createCheckout` resolves. On mobile viewports the popup model behaves as a same-window redirect. If the popup is blocked (or `mode: 'redirect'` is set explicitly), the button navigates the current window via `location.href` and dispatches `maytes:checkout-redirected` — this is a normal outcome, not a failure.
 
 ## Environment resolution
 
@@ -161,7 +161,7 @@ production → https://checkout.maytes.co
 | Cleanup fn or `destroy()` called twice | Idempotent — no-op. |
 | Last button removed | Injected `<style>` tag is removed (refcounted in `styles.ts`). |
 
-We deliberately don't expose `onComplete` / `onCancel` / `onError` / `onBlocked` callbacks. In the default redirect model the merchant page is gone before the checkout terminates, and in popup mode the hosted checkout owns terminal flow and merchant-return navigation. Failures before navigation (network errors in `createCheckout`, invalid shape) are surfaced via `console.error` + the `maytes:checkout-failed` event.
+We deliberately don't expose `onComplete` / `onCancel` / `onError` / `onBlocked` callbacks. In the default popup mode, the hosted checkout owns terminal flow and merchant-return navigation; in redirect mode the merchant page is gone before the checkout terminates. Failures before navigation (network errors in `createCheckout`, invalid shape) are surfaced via `console.error` + the `maytes:checkout-failed` event.
 
 ## Security
 
@@ -213,7 +213,7 @@ Coverage — **111 tests across 7 files** (`src/test/`):
 | File | Tests | What it covers |
 |---|---|---|
 | `init.test.ts` | 9 | factory validation (`createCheckout` type, `environment` enum), internal `baseUrl` passthrough |
-| `button.test.ts` | 50 | render → click → closure → default redirect, popup launch (`about:blank` sync open, branded loader, `location.replace` navigation), mobile redirect fallback, blocked-popup redirect event, unique per-instance window name, busy gating, double-click suppression, destroy-mid-flight guard, listener detach on destroy, versioned style marker, immediate overlay clear on Escape, rejection / invalid-shape recovery, env → URL mapping, `baseUrl` override, popup-closed polling + overlay teardown, `maytes:checkout-*` events, cleanup/`destroy` idempotency, style refcounting, `cspNonce` presence/absence, `label` / `block` / `mode` props, multi-button concurrency |
+| `button.test.ts` | 50 | render → click → closure → default popup launch (`about:blank` sync open, branded loader, `location.replace` navigation), explicit redirect mode, mobile redirect fallback, blocked-popup redirect event, unique per-instance window name, busy gating, double-click suppression, destroy-mid-flight guard, listener detach on destroy, versioned style marker, immediate overlay clear on Escape, rejection / invalid-shape recovery, env → URL mapping, `baseUrl` override, popup-closed polling + overlay teardown, `maytes:checkout-*` events, cleanup/`destroy` idempotency, style refcounting, `cspNonce` presence/absence, `label` / `block` / `mode` props, multi-button concurrency |
 | `env.test.ts` | 24 | `isValidEnvironment` (positive, negative, type-guard narrowing), `resolveBaseUrl` (sandbox / staging / production mapping, override precedence, defence-in-depth throw on unknown env) |
 | `redirect.test.ts` | 10 | URL construction, trailing-slash strip, URL encoding, empty / whitespace `checkoutId`, malformed `baseUrl`, protocol allowlist, `replace` vs `href` |
 | `overlay.test.ts` | 4 | overlay show/hide, native `<dialog>` `showModal` with inline-backdrop fallback |

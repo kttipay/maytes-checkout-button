@@ -128,9 +128,22 @@ describe('maytes.renderButton', () => {
     expect(POPUP_LOADING_CSS).toContain(foundation.brand.secondary);
   });
 
-  it('default mode redirects in the same window (no popup opened)', async () => {
-    Maytes({ createCheckout: async () => ({ checkoutId: 'red' }), environment: 'sandbox' })
+  it('default mode opens a popup (no same-window redirect)', async () => {
+    const popup = makeFakePopup();
+    openSpy.mockReturnValueOnce(popup as unknown as Window);
+    Maytes({ createCheckout: async () => ({ checkoutId: 'pop' }), environment: 'sandbox' })
       .renderButton(container);
+    container.querySelector('button')!.click();
+    expect(openSpy).toHaveBeenCalledOnce();
+    expect(openSpy.mock.calls[0]?.[0]).toBe('about:blank');
+    await vi.waitFor(() => expect(popup.location.replace).toHaveBeenCalled());
+    expect(popup.location.replace).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=pop');
+    expect(assignSpy).not.toHaveBeenCalled();
+  });
+
+  it("mode: 'redirect' navigates in the same window (no popup opened)", async () => {
+    Maytes({ createCheckout: async () => ({ checkoutId: 'red' }), environment: 'sandbox' })
+      .renderButton(container, { mode: 'redirect' });
     container.querySelector('button')!.click();
     await vi.waitFor(() => expect(assignSpy).toHaveBeenCalled());
     expect(assignSpy).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=red');
@@ -600,7 +613,7 @@ describe('maytes.renderButton', () => {
     Maytes({
       createCheckout: async () => { throw new Error('network down'); },
       environment: 'sandbox',
-    }).renderButton(container);
+    }).renderButton(container, { mode: 'redirect' });
     const button = container.querySelector('button')!;
     button.click();
     await vi.waitFor(() => expect(button.hasAttribute('aria-disabled')).toBe(false));
@@ -612,7 +625,7 @@ describe('maytes.renderButton', () => {
     Maytes({
       createCheckout: async () => ({ wrong: 'shape' } as unknown as { checkoutId: string }),
       environment: 'sandbox',
-    }).renderButton(container);
+    }).renderButton(container, { mode: 'redirect' });
     const button = container.querySelector('button')!;
     button.click();
     await vi.waitFor(() => expect(button.hasAttribute('aria-disabled')).toBe(false));
@@ -733,7 +746,7 @@ describe('maytes.renderButton', () => {
     Maytes({
       createCheckout: async () => { throw new Error('nope'); },
       environment: 'sandbox',
-    }).renderButton(container);
+    }).renderButton(container, { mode: 'redirect' });
     container.querySelector('button')!.click();
     await vi.waitFor(() => expect(failed).toHaveBeenCalled());
     expect(opened).not.toHaveBeenCalled();
@@ -750,7 +763,7 @@ describe('maytes.renderButton', () => {
       if (attempt === 1) throw new Error('first fails');
       return { checkoutId: 'second' };
     });
-    Maytes({ createCheckout, environment: 'sandbox' }).renderButton(container);
+    Maytes({ createCheckout, environment: 'sandbox' }).renderButton(container, { mode: 'redirect' });
     const button = container.querySelector('button')!;
     button.click();
     await vi.waitFor(() => expect(button.hasAttribute('aria-disabled')).toBe(false));
@@ -785,7 +798,7 @@ describe('maytes.renderButton', () => {
       () => new Promise<{ checkoutId: string }>((resolve) => { resolveCreate = resolve; }),
     );
     const maytes = Maytes({ createCheckout, environment: 'sandbox' });
-    maytes.renderButton(container);
+    maytes.renderButton(container, { mode: 'redirect' });
     container.querySelector('button')!.click();
     expect(createCheckout).toHaveBeenCalledTimes(1);
     maytes.destroy();

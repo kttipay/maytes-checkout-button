@@ -21,8 +21,14 @@ describe('rulesetNeedsUpdate', () => {
     expect(rulesetNeedsUpdate(stale)).toBe(true);
   });
 
-  it('reports an update needed when cache-control changed', () => {
-    const stale = [{ ...CACHE_RULES[0], cacheControl: 'public, max-age=60' }, CACHE_RULES[1]];
-    expect(rulesetNeedsUpdate(stale)).toBe(true);
+  it('reports an update needed when a TTL or the immutable flag changed', () => {
+    const staleEdgeTtl = [{ ...CACHE_RULES[0], edgeTtl: 60 }, CACHE_RULES[1]];
+    expect(rulesetNeedsUpdate(staleEdgeTtl)).toBe(true);
+
+    const staleBrowserTtl = [CACHE_RULES[0], { ...CACHE_RULES[1], browserTtl: 60 }];
+    expect(rulesetNeedsUpdate(staleBrowserTtl)).toBe(true);
+
+    const staleImmutable = [CACHE_RULES[0], { ...CACHE_RULES[1], immutable: true }];
+    expect(rulesetNeedsUpdate(staleImmutable)).toBe(true);
   });
 });

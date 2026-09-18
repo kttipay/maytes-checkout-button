@@ -13,24 +13,46 @@ const requestHeaders = {
   'Content-Type': 'application/json',
 };
 
-function browserMaxAge(cacheControl) {
-  const match = cacheControl.match(/max-age=(\d+)/);
-  if (match === null) {
-    throw new Error(`[ensure-cdn-cache-rules] cacheControl has no max-age: ${cacheControl}`);
-  }
-  return Number(match[1]);
+function toApiRule(rule) {
+  return {
+    description: rule.id,
+    expression: rule.expression,
+    action: 'set_cache_settings',
+    action_parameters: {
+      cache: true,
+      edge_ttl: { mode: 'override_origin', default: rule.edgeTtl },
+      browser_ttl: { mode: 'override_origin', default: rule.browserTtl },
+      ...(rule.immutable ? { cache_control_directives: { immutable: true } } : {}),
+    },
+  };
+}
+
+function fromApiRule(apiRule) {
+  return {
+    id: apiRule.description,
+    expression: apiRule.expression,
+    edgeTtl: apiRule.action_parameters?.edge_ttl?.default,
+    browserTtl: apiRule.action_parameters?.browser_ttl?.default,
+    immutable: Boolean(apiRule.action_parameters?.cache_control_directives?.immutable),
+  };
 }
 
 const getResponse = await fetch(rulesetUrl, { headers: requestHeaders });
-const currentRules = getResponse.ok
-  ? (await getResponse.json()).result.rules.map((rule) => ({
-      id: rule.description,
-      expression: rule.expression,
-      cacheControl: `public, max-age=${rule.action_parameters?.browser_ttl?.default ?? 0}`,
-    }))
-  : [];
+if (!getResponse.ok) {
+  console.error(
+    '[ensure-cdn-cache-rules] failed to read the current ruleset, refusing to overwrite it blindly:',
+    await getResponse.text(),
+  );
+  process.exit(1);
+}
 
-if (getResponse.ok && !rulesetNeedsUpdate(currentRules, CACHE_RULES)) {
+const getBody = await getResponse.json();
+const existingApiRules = getBody.result?.rules ?? [];
+const ownedIds = new Set(CACHE_RULES.map((rule) => rule.id));
+const currentOwned = existingApiRules.filter((rule) => ownedIds.has(rule.description)).map(fromApiRule);
+const foreignApiRules = existingApiRules.filter((rule) => !ownedIds.has(rule.description));
+
+if (!rulesetNeedsUpdate(currentOwned, CACHE_RULES)) {
   console.log('[ensure-cdn-cache-rules] already up to date, no changes needed');
   process.exit(0);
 }
@@ -38,18 +60,7 @@ if (getResponse.ok && !rulesetNeedsUpdate(currentRules, CACHE_RULES)) {
 const putResponse = await fetch(rulesetUrl, {
   method: 'PUT',
   headers: requestHeaders,
-  body: JSON.stringify({
-    rules: CACHE_RULES.map((rule) => ({
-      description: rule.id,
-      expression: rule.expression,
-      action: 'set_cache_settings',
-      action_parameters: {
-        cache: true,
-        edge_ttl: { mode: 'override_origin', default: 31536000 },
-        browser_ttl: { mode: 'override_origin', default: browserMaxAge(rule.cacheControl) },
-      },
-    })),
-  }),
+  body: JSON.stringify({ rules: [...foreignApiRules, ...CACHE_RULES.map(toApiRule)] }),
 });
 
 if (!putResponse.ok) {

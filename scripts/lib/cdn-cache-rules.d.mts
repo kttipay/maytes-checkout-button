@@ -1,7 +1,9 @@
 export interface CacheRule {
   id: string;
   expression: string;
-  cacheControl: string;
+  edgeTtl: number;
+  browserTtl: number;
+  immutable: boolean;
 }
 
 export const CACHE_RULES: [CacheRule, CacheRule];

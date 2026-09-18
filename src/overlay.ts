@@ -92,6 +92,7 @@ export function showOverlay(state: InstanceState): void {
   const dialog = buildOverlay(host, state);
   state.overlayEl = dialog;
   host.body.appendChild(dialog);
+  if (host !== document) detachOverlayWhenThisPageHides(state);
   if (typeof dialog.showModal === 'function') {
     try {
       dialog.showModal();
@@ -106,8 +107,16 @@ export function showOverlay(state: InstanceState): void {
   }
 }
 
+function detachOverlayWhenThisPageHides(state: InstanceState): void {
+  const onPageHide = () => hideOverlay(state);
+  window.addEventListener('pagehide', onPageHide);
+  state.overlayDetach = () => window.removeEventListener('pagehide', onPageHide);
+}
+
 export function hideOverlay(state: InstanceState): void {
   if (state.overlayEl === null) return;
+  state.overlayDetach?.();
+  state.overlayDetach = null;
   const dialog = state.overlayEl;
   const host = dialog.ownerDocument;
   if (typeof dialog.close === 'function' && dialog.open) dialog.close();

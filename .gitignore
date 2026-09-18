@@ -2,5 +2,6 @@ node_modules
 dist
 *.tsbuildinfo
 .wrangler
+.cdn-history-cache
 .env
 .env.*

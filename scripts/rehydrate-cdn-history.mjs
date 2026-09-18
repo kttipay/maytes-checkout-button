@@ -66,7 +66,11 @@ for (const tag of tags) {
   const changelogSriForVersion = sriRecords.get(version);
 
   for (const [sourceName, meta] of Object.entries(integrity.files)) {
-    const bundlePath = resolve(tagCacheDir, meta.hashedName);
+    const bundlePath = resolve(tagCacheDir, sourceName);
+    if (!existsSync(bundlePath)) {
+      console.error(`[rehydrate-cdn-history] ${tag}: expected downloaded asset ${sourceName} not found in ${tagCacheDir}`);
+      process.exit(1);
+    }
     const bytes = readFileSync(bundlePath);
     const recomputedSri = `sha384-${createHash('sha384').update(bytes).digest('base64')}`;
 

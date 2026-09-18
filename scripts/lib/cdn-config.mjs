@@ -1,9 +1,6 @@
 import { latestPerMajor } from './semver-lite.mjs';
 
-export const DEV_CHANNEL_PREFIX = '/dev';
 export const CDN_ORIGIN = 'https://js.maytes.co';
-
-const CACHE_SHORT = 'Cache-Control: public, max-age=300';
 
 export function cdnUrl(path) {
   return `${CDN_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
@@ -27,24 +24,15 @@ export function majorPath(version, sourceName) {
 }
 
 export function buildCdnConfig(releases) {
-  const current = releases[0];
-
   const headers = `/*
   Access-Control-Allow-Origin: *
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
-${DEV_CHANNEL_PREFIX}/*
-  ${CACHE_SHORT}
-
 /integrity.json
   Cache-Control: public, max-age=60
 `;
-
-  const devRedirects = Object.keys(current.files).map(
-    (sourceName) => `${DEV_CHANNEL_PREFIX}/${sourceName}   /${sourceName}   200`,
-  );
 
   const pinRedirects = releases.flatMap(({ version, files }) =>
     Object.entries(files).map(
@@ -62,7 +50,7 @@ ${DEV_CHANNEL_PREFIX}/*
     );
   });
 
-  const redirects = [...devRedirects, ...pinRedirects, ...evergreenRedirects].join('\n') + '\n';
+  const redirects = [...pinRedirects, ...evergreenRedirects].join('\n') + '\n';
 
   return { headers, redirects };
 }

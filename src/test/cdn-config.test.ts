@@ -57,16 +57,11 @@ describe('cdn urls', () => {
   });
 
   it('normalizes leading slashes', () => {
-    expect(cdnUrl('/dev/checkout-button.js')).toBe('https://js.maytes.co/dev/checkout-button.js');
+    expect(cdnUrl('/checkout-button.abc12345.js')).toBe('https://js.maytes.co/checkout-button.abc12345.js');
   });
 });
 
 describe('buildCdnConfig', () => {
-  it('redirects the dev channel to the current (first) release only', () => {
-    const { redirects } = buildCdnConfig([RELEASE_101, RELEASE_100]);
-    expect(redirects).toContain('/dev/checkout-button.js   /checkout-button.js   200');
-  });
-
   it('creates a pinned SemVer redirect for every release, not just the latest', () => {
     const { redirects } = buildCdnConfig([RELEASE_101, RELEASE_100]);
     expect(redirects).toContain('/v1.0.1/checkout-button.js   /checkout-button.abc12345.js   200');
@@ -84,7 +79,6 @@ describe('buildCdnConfig', () => {
     const single = buildCdnConfig([RELEASE_101]).headers;
     const many = buildCdnConfig([RELEASE_101, RELEASE_100, RELEASE_200]).headers;
     expect(many).toBe(single);
-    expect(many).toContain('/dev/*');
     expect(many).toContain('/integrity.json');
     expect(many).not.toContain('immutable');
   });

@@ -29,12 +29,14 @@ Each release is served from `https://js.maytes.co` under four URL forms:
 |---|---|---|---|
 | SemVer pin | `/v<version>/checkout-button.js` | 1 yr | yes |
 | Content-hash pin | `/checkout-button.<8-char-sha256>.js` | 1 yr | yes |
-| Rolling (dev only) | `/dev/checkout-button.js` | ~5 min | no (bytes roll) |
+| Internal dev branch | `/dev/checkout-button.js` | no cache | no (bytes roll) |
 | Evergreen major (opt-in) | `/v<major>/checkout-button.js` | ~5 min | no (bytes roll) |
 
-Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; track `/dev/` only for development / staging auto-updates. An opt-in `/v1/`-style evergreen major channel also exists for merchants who explicitly choose auto-updates over the pin-safety guarantee — see [`cdn-versioning.md`](./cdn-versioning.md) for the reasoning. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
+Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; `/dev/` is internal-only, for pre-merge testing (see below). An opt-in `/v1/`-style evergreen major channel also exists for merchants who explicitly choose auto-updates over the pin-safety guarantee — see [`cdn-versioning.md`](./cdn-versioning.md) for the reasoning. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
 
-CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`. `scripts/cdn-config.mjs` emits `_headers` — the fixed global/security headers plus CORS, the short-cached `/dev/*` alias, and `/integrity.json` — and `_redirects`, which rewrites every release's SemVer and evergreen paths onto its hashed bundle. `Cache-Control` for the pins and the evergreen alias comes from Cloudflare Cache Rules, provisioned by `scripts/ensure-cdn-cache-rules.mjs`, not from `_headers`.
+CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`. `scripts/cdn-config.mjs` emits `_headers` — the fixed global/security headers plus CORS and `/integrity.json` — and `_redirects`, which rewrites every release's SemVer and evergreen paths onto its hashed bundle. `Cache-Control` for the pins and the evergreen alias comes from Cloudflare Cache Rules, provisioned by `scripts/ensure-cdn-cache-rules.mjs`, not from `_headers`.
+
+**Internal dev channel:** pushing to the `dev` branch runs `.github/workflows/dev.yml` — the same typecheck/test/build gate as a PR, then `wrangler pages deploy --branch=dev`. That's a Cloudflare Pages *preview* deployment, entirely separate from the production deployment that serves `js.maytes.co` — a broken `dev` push cannot affect production. A Cloudflare zone-level Redirect Rule forwards `js.maytes.co/dev/*` to that preview deployment, so `dev`'s current build stays reachable at a stable URL for internal testing.
 
 ## Public API
 
@@ -210,7 +212,7 @@ npm run test:run      # single-shot, used by CI
 npm run typecheck     # tsc --noEmit
 ```
 
-Coverage — **190 tests across 14 files** (`src/test/`):
+Coverage — **189 tests across 14 files** (`src/test/`):
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -222,7 +224,7 @@ Coverage — **190 tests across 14 files** (`src/test/`):
 | `overlay.test.ts` | 4 | `hideOverlay` no-op when nothing was shown, mounting into the local document at top level, mounting into a same-origin top document when framed (with its style tag cloned along), falling back to the local document when the top window throws `SecurityError` |
 | `errors.test.ts` | 8 | `MaytesError` is an `Error`, code/message/name/stack present, `toString` serialization, `MaytesErrorCode.Config === 'CONFIG'`, code surface is `{ Config }` only |
 | `changelog.test.ts` | 14 | unit-tests the release-script changelog slicer (`scripts/lib/changelog.mjs`), not SDK behaviour: section-bounds lookup, section extraction, SRI block injection (including the never-invent-a-section guard and idempotent re-runs), SRI record extraction across every released version |
-| `cdn-config.test.ts` | 9 | unit-tests `scripts/lib/cdn-config.mjs`: SemVer and `/v{major}` path building, hashed URL building, leading-slash normalization, `buildCdnConfig` pointing `/dev/*` at the current release only, a pinned SemVer redirect for every tracked release, one evergreen redirect per major, and a fixed header set |
+| `cdn-config.test.ts` | 8 | unit-tests `scripts/lib/cdn-config.mjs`: SemVer and `/v{major}` path building, hashed URL building, leading-slash normalization, a pinned SemVer redirect for every tracked release, one evergreen redirect per major, and a fixed header set |
 | `cdn-cache-rules.test.ts` | 18 | unit-tests `scripts/lib/cdn-cache-rules.mjs`: the two fixed Cloudflare Cache Rules scoped to `js.maytes.co`, wildcard disambiguation between pinned SemVer, content-hash and evergreen paths, the unhashed-bundle exclusion, and `rulesetNeedsUpdate` change detection |
 | `release-verification.test.ts` | 7 | unit-tests the CDN history rehydration checks: `verifyReleaseHash` against the CHANGELOG record with an `integrity.json` fallback, `checkTagCoverage` for new repos, the version threshold and missing tags |
 | `semver-lite.test.ts` | 6 | unit-tests `compareVersions` (numeric major/minor/patch ordering) and `latestPerMajor` (highest version per major, order-independent) |

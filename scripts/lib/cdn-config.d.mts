@@ -1,4 +1,3 @@
-export const DEV_CHANNEL_PREFIX: '/dev';
 export const CDN_ORIGIN: 'https://js.maytes.co';
 
 export function cdnUrl(path: string): string;

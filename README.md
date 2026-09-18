@@ -25,7 +25,7 @@ Renders a button and launches the Maytes-hosted checkout. Default mode is same-w
 - **Framework-agnostic** — same factory whether it's a `<script>` tag or `import { Maytes }`; no React/Vue/Angular binding to keep in sync.
 - **Zero runtime dependencies** — a small, dependency-free bundle; ESM/CJS ship unminified so your bundler can tree-shake it.
 - **CSP-safe by construction** — no `eval`, `Function`, or string-form timers; every release is scanned for it before shipping.
-- **SRI-verified CDN** — pin a release by SemVer or content hash, both carrying the same integrity hash, published alongside every release.
+- **Evergreen CDN by default** — the recommended `<script>` tag always serves the newest release automatically; pin a release by SemVer or content hash instead if you'd rather freeze on a tested build.
 - **Signed provenance** — every npm release carries a [SLSA](https://slsa.dev) provenance attestation back to this repo's build.
 
 ## Contents
@@ -40,7 +40,30 @@ Renders a button and launches the Maytes-hosted checkout. Default mode is same-w
 
 ### Script tag (CDN)
 
-For production, pin an exact release. The readable SemVer URL and the content-hash URL are two names for the **same release bytes** and share the **same SRI value** — pick either:
+|  | Evergreen (recommended) | Pinned |
+|---|---|---|
+| **Use when** | Default choice — get the newest `1.x` release automatically | You'd rather freeze on a tested build and update on your own schedule |
+| **Guarantee** | Always current; a bad release reaches everyone on it immediately | The bytes you tested are the bytes shipped, forever |
+| **SRI** | Not possible | Yes |
+
+### Evergreen (auto-updating URL, recommended)
+
+```html
+<script src="https://js.maytes.co/v1/checkout-button.js"
+        crossorigin="anonymous"></script>
+```
+
+This URL has no `integrity` attribute, and can't have one: it moves to whichever `1.x` release is newest (~5 minute edge cache), so the bytes behind it change without notice. Restrict which origins your page trusts via CSP instead of a content hash:
+
+```
+Content-Security-Policy: script-src 'self' https://js.maytes.co;
+```
+
+This isn't a way to get bug fixes faster than pinning — a fix ships the same way either way (a new release). What you get from `/v1/` is not having to separately notice each release and bump a pin yourself; what you give up is that a bad release reaches you the moment it ships, with no way to stay back on the last good build. `https://js.maytes.co/integrity.json` reflects whatever `/v1/` currently serves while `1.x` is the newest major, if you want to poll it and alert on unexpected changes yourself — it stops describing `/v1/` once a `2.0.0` ships (which stays on the last `1.x`; move to `/v2/checkout-button.js` explicitly when you're ready).
+
+### Pinned (SemVer or content hash)
+
+If you'd rather trade `/v1/`'s convenience for a guarantee — freeze on a tested build, update on your own schedule — pin an exact release instead. The readable SemVer URL and the content-hash URL are two names for the **same release bytes** and share the **same SRI value** — pick either:
 
 <!-- @cdn-example-start -->
 ```html
@@ -56,28 +79,7 @@ For production, pin an exact release. The readable SemVer URL and the content-ha
 ```
 <!-- @cdn-example-end -->
 
-The real version, hash, and SRI for each release live in [`CHANGELOG.md`](./CHANGELOG.md), the matching [release](https://github.com/kttipay/maytes-checkout-button/releases), and `https://js.maytes.co/integrity.json`.
-
-Use a pinned URL in every environment, development included — pinning is what makes the bytes you tested the bytes your shoppers get.
-
-### Evergreen (auto-updating) URL
-
-Pinning (above) is the default and the recommended choice for production. If you'd rather trade that guarantee for automatic updates — accepting that a bad release reaches you immediately, with no ability to stay on a known-good build — use the major-version alias instead:
-
-```html
-<script src="https://js.maytes.co/v1/checkout-button.js"
-        crossorigin="anonymous"></script>
-```
-
-This URL has no `integrity` attribute, and can't have one: it moves to whichever `1.x` release is newest (~5 minute edge cache), so the bytes behind it change without notice. Restrict which origins your page trusts via CSP instead of a content hash:
-
-```
-Content-Security-Policy: script-src 'self' https://js.maytes.co;
-```
-
-This isn't a way to get bug fixes faster than pinning — a fix ships the same way either way (a new release), and if you're pinned, bumping your pin to the new version is exactly as fast as staying on `/v1/` would have been. What you're actually trading is safety: on `/v1/`, a bad release reaches you the moment it ships, with no way to stay back on the last good build. While `1.x` is the newest major, `https://js.maytes.co/integrity.json` reflects whatever `/v1/` currently serves, if you want to poll it and alert on unexpected changes yourself — it describes the newest release only, so once a `2.0.0` ships it stops describing `/v1/` (which stays on the last `1.x`).
-
-`/v1/` only ever tracks `1.x`. When a breaking `2.0.0` ships, `/v1/` keeps resolving to the last `1.x` release rather than disappearing or jumping to `2.x` — move to `/v2/checkout-button.js` explicitly when you're ready.
+The real version, hash, and SRI for each release live in [`CHANGELOG.md`](./CHANGELOG.md), the matching [release](https://github.com/kttipay/maytes-checkout-button/releases), and `https://js.maytes.co/integrity.json`. A pinned URL never changes once published — every SemVer and content-hash pin survives across future releases, so it's a durable fallback whenever you want it.
 
 ### npm
 

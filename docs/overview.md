@@ -36,7 +36,7 @@ Pin a SemVer or hashed URL for production and set `<script integrity="…">` for
 
 CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`. `scripts/cdn-config.mjs` emits `_headers` — the fixed global/security headers plus CORS and `/integrity.json` — and `_redirects`, which rewrites every release's SemVer and evergreen paths onto its hashed bundle. `Cache-Control` for the pins and the evergreen alias comes from Cloudflare Cache Rules, provisioned by `scripts/ensure-cdn-cache-rules.mjs`, not from `_headers`.
 
-**Internal dev channel:** pushing to the `dev` branch runs `.github/workflows/dev.yml` — the same typecheck/test/build gate as a PR, then `wrangler pages deploy --branch=dev`. That's a Cloudflare Pages *preview* deployment, entirely separate from the production deployment that serves `js.maytes.co` — a broken `dev` push cannot affect production. A Cloudflare zone-level Redirect Rule forwards `js.maytes.co/dev/*` to that preview deployment, so `dev`'s current build stays reachable at a stable URL for internal testing.
+**Internal dev channel:** pushing to the `dev` branch runs `.github/workflows/dev.yml` — the same typecheck/test/build gate as a PR, then `wrangler pages deploy --branch=dev`. That's a Cloudflare Pages *preview* deployment, entirely separate from the production deployment that serves `js.maytes.co` — a broken `dev` push cannot affect production. A Cloudflare zone-level Redirect Rule (`scripts/ensure-cdn-dev-redirect.mjs`, re-applied on every `dev` push) forwards `js.maytes.co/dev/*` to `dev.checkout-button.pages.dev` — Cloudflare's stable alias for that branch's latest preview — with an explicit cache-bypass Cache Rule on the same path so the redirect itself is never cached; the destination already serves `max-age=0, must-revalidate`, so nothing along the path can go stale.
 
 ## Public API
 
@@ -212,7 +212,7 @@ npm run test:run      # single-shot, used by CI
 npm run typecheck     # tsc --noEmit
 ```
 
-Coverage — **189 tests across 14 files** (`src/test/`):
+Coverage — **203 tests across 15 files** (`src/test/`):
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -225,7 +225,8 @@ Coverage — **189 tests across 14 files** (`src/test/`):
 | `errors.test.ts` | 8 | `MaytesError` is an `Error`, code/message/name/stack present, `toString` serialization, `MaytesErrorCode.Config === 'CONFIG'`, code surface is `{ Config }` only |
 | `changelog.test.ts` | 14 | unit-tests the release-script changelog slicer (`scripts/lib/changelog.mjs`), not SDK behaviour: section-bounds lookup, section extraction, SRI block injection (including the never-invent-a-section guard and idempotent re-runs), SRI record extraction across every released version |
 | `cdn-config.test.ts` | 8 | unit-tests `scripts/lib/cdn-config.mjs`: SemVer and `/v{major}` path building, hashed URL building, leading-slash normalization, a pinned SemVer redirect for every tracked release, one evergreen redirect per major, and a fixed header set |
-| `cdn-cache-rules.test.ts` | 18 | unit-tests `scripts/lib/cdn-cache-rules.mjs`: the two fixed Cloudflare Cache Rules scoped to `js.maytes.co`, wildcard disambiguation between pinned SemVer, content-hash and evergreen paths, the unhashed-bundle exclusion, and `rulesetNeedsUpdate` change detection |
+| `cdn-cache-rules.test.ts` | 24 | unit-tests `scripts/lib/cdn-cache-rules.mjs`: the three fixed Cloudflare Cache Rules scoped to `js.maytes.co` (immutable pins, evergreen, dev-branch bypass), wildcard disambiguation between pinned SemVer, content-hash and evergreen paths, the unhashed-bundle exclusion, and `rulesetNeedsUpdate` change detection |
+| `cdn-dev-redirect.test.ts` | 8 | unit-tests `scripts/lib/cdn-dev-redirect.mjs`: the `/dev/*` → Pages-preview redirect rule's scope, target expression, and status code, and `redirectNeedsUpdate` change detection |
 | `release-verification.test.ts` | 7 | unit-tests the CDN history rehydration checks: `verifyReleaseHash` against the CHANGELOG record with an `integrity.json` fallback, `checkTagCoverage` for new repos, the version threshold and missing tags |
 | `semver-lite.test.ts` | 6 | unit-tests `compareVersions` (numeric major/minor/patch ordering) and `latestPerMajor` (highest version per major, order-independent) |
 | `readme.test.ts` | 5 | unit-tests `scripts/lib/readme.mjs`'s CDN-example injector: no-op when the markers are absent, replaces both example URLs, leaves the surrounding prose untouched, idempotent re-run, keeps the SRI placeholder as a literal ellipsis |

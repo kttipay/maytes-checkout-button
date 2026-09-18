@@ -4,6 +4,7 @@ const CDN_HOST = new URL(CDN_ORIGIN).host;
 export const SEMVER_PIN_WILDCARD = '/v*.*.*/checkout-button.*';
 export const HASH_PIN_WILDCARD = '/checkout-button.*.*';
 export const EVERGREEN_WILDCARD = '/v*/checkout-button.*';
+export const DEV_BRANCH_WILDCARD = '/dev/*';
 
 export const UNHASHED_BUNDLE_PATHS = [
   '/checkout-button.js',
@@ -42,6 +43,11 @@ export const CACHE_RULES = [
     edgeTtl: 300,
     browserTtl: 300,
   },
+  {
+    id: 'checkout-button-dev-bypass',
+    expression: scopedToHost(`http.request.uri.path wildcard "${DEV_BRANCH_WILDCARD}"`),
+    bypass: true,
+  },
 ];
 
 export function rulesetNeedsUpdate(currentRules, desiredRules = CACHE_RULES) {
@@ -50,6 +56,7 @@ export function rulesetNeedsUpdate(currentRules, desiredRules = CACHE_RULES) {
     if (current === undefined) return true;
     return (
       current.expression !== desired.expression ||
+      Boolean(current.bypass) !== Boolean(desired.bypass) ||
       current.edgeTtl !== desired.edgeTtl ||
       current.browserTtl !== desired.browserTtl ||
       JSON.stringify(current.edgeTtlStatusCodeOverrides ?? []) !==

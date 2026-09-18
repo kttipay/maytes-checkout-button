@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CACHE_RULES,
+  DEV_BRANCH_WILDCARD,
   EVERGREEN_WILDCARD,
   HASH_PIN_WILDCARD,
   SEMVER_PIN_WILDCARD,
@@ -24,8 +25,8 @@ function matchesImmutablePinRule(path: string): boolean {
 }
 
 describe('CACHE_RULES', () => {
-  it('defines exactly 2 fixed rules', () => {
-    expect(CACHE_RULES).toHaveLength(2);
+  it('defines exactly 3 fixed rules', () => {
+    expect(CACHE_RULES).toHaveLength(3);
   });
 
   it('scopes every rule to the js.maytes.co host', () => {
@@ -102,6 +103,21 @@ describe('immutable-pins rule composition (wildcard + unhashed-bundle exclusion)
   });
 });
 
+describe('dev-branch bypass rule', () => {
+  it('matches the dev-branch path', () => {
+    expect(wildcardMatches(DEV_BRANCH_WILDCARD, '/dev/checkout-button.js')).toBe(true);
+  });
+
+  it('is a cache bypass, not a TTL override', () => {
+    expect(CACHE_RULES[2].bypass).toBe(true);
+    expect(CACHE_RULES[2].edgeTtl).toBeUndefined();
+  });
+
+  it('is scoped to the /dev/ path', () => {
+    expect(CACHE_RULES[2].expression).toContain(`http.request.uri.path wildcard "${DEV_BRANCH_WILDCARD}"`);
+  });
+});
+
 describe('rulesetNeedsUpdate', () => {
   it('reports no update needed when current rules already match', () => {
     expect(rulesetNeedsUpdate(CACHE_RULES)).toBe(false);
@@ -112,20 +128,25 @@ describe('rulesetNeedsUpdate', () => {
   });
 
   it('reports an update needed when an expression changed', () => {
-    const stale = [{ ...CACHE_RULES[0], expression: 'old expression' }, CACHE_RULES[1]];
+    const stale = [{ ...CACHE_RULES[0], expression: 'old expression' }, CACHE_RULES[1], CACHE_RULES[2]];
     expect(rulesetNeedsUpdate(stale)).toBe(true);
   });
 
   it('reports an update needed when a TTL changed', () => {
-    const staleEdgeTtl = [{ ...CACHE_RULES[0], edgeTtl: 60 }, CACHE_RULES[1]];
+    const staleEdgeTtl = [{ ...CACHE_RULES[0], edgeTtl: 60 }, CACHE_RULES[1], CACHE_RULES[2]];
     expect(rulesetNeedsUpdate(staleEdgeTtl)).toBe(true);
 
-    const staleBrowserTtl = [CACHE_RULES[0], { ...CACHE_RULES[1], browserTtl: 60 }];
+    const staleBrowserTtl = [CACHE_RULES[0], { ...CACHE_RULES[1], browserTtl: 60 }, CACHE_RULES[2]];
     expect(rulesetNeedsUpdate(staleBrowserTtl)).toBe(true);
   });
 
   it('reports an update needed when the status-code TTL overrides changed', () => {
-    const staleOverrides = [{ ...CACHE_RULES[0], edgeTtlStatusCodeOverrides: [] }, CACHE_RULES[1]];
+    const staleOverrides = [{ ...CACHE_RULES[0], edgeTtlStatusCodeOverrides: [] }, CACHE_RULES[1], CACHE_RULES[2]];
     expect(rulesetNeedsUpdate(staleOverrides)).toBe(true);
+  });
+
+  it('reports an update needed when the bypass flag changed', () => {
+    const staleBypass = [CACHE_RULES[0], CACHE_RULES[1], { ...CACHE_RULES[2], bypass: false }];
+    expect(rulesetNeedsUpdate(staleBypass)).toBe(true);
   });
 });

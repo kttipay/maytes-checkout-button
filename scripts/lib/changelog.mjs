@@ -50,3 +50,34 @@ export function injectSriBlock(changelog, version, sriBlock) {
 
   return changelog.slice(0, bounds.start) + updatedSection + changelog.slice(bounds.end);
 }
+
+const VERSION_HEADING_RE = /^## (\S+)/gm;
+
+export function extractSriRecords(changelog) {
+  const records = new Map();
+  const headings = [...changelog.matchAll(VERSION_HEADING_RE)];
+
+  for (let i = 0; i < headings.length; i++) {
+    const heading = headings[i];
+    const version = heading[1];
+    const start = heading.index ?? 0;
+    const end = i + 1 < headings.length ? (headings[i + 1].index ?? changelog.length) : changelog.length;
+    const section = changelog.slice(start, end);
+
+    const sriStart = section.indexOf(SRI_START_MARKER);
+    const sriEnd = section.indexOf(SRI_END_MARKER);
+    if (sriStart === -1 || sriEnd === -1 || sriEnd < sriStart) continue;
+    if (records.has(version)) continue;
+
+    const block = section.slice(sriStart, sriEnd);
+    const files = {};
+    for (const match of block.matchAll(/^(\S+)\s+(sha384-\S+)\s*$/gm)) {
+      files[match[1]] = match[2];
+    }
+    if (Object.keys(files).length > 0) {
+      records.set(version, files);
+    }
+  }
+
+  return records;
+}

@@ -15,3 +15,5 @@ export function injectSriBlock(
   version: string,
   sriBlock: string,
 ): string | null;
+
+export function extractSriRecords(changelog: string): Map<string, Record<string, string>>;

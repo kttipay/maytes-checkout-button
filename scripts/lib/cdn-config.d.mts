@@ -9,7 +9,11 @@ export function semverUrl(version: string, sourceName: string): string;
 
 export function hashedUrl(hashedName: string): string;
 
-export function buildCdnConfig(integrity: {
-  version: string;
-  files: Record<string, { hashedName: string }>;
-}): { headers: string; redirects: string };
+export function majorPath(version: string, sourceName: string): string;
+
+export function buildCdnConfig(
+  releases: Array<{
+    version: string;
+    files: Record<string, { hashedName: string }>;
+  }>,
+): { headers: string; redirects: string };

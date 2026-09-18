@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractSection, findSectionBounds, injectSriBlock } from '../../scripts/lib/changelog.mjs';
+import { extractSection, extractSriRecords, findSectionBounds, injectSriBlock } from '../../scripts/lib/changelog.mjs';
 
 const CHANGELOG = [
   '# Changelog',
@@ -105,5 +105,53 @@ describe('injectSriBlock', () => {
     const updated = injectSriBlock(changelog, '0.2.0', SRI) as string;
     const olderSection = updated.slice(updated.indexOf('## 0.1.0'));
     expect(olderSection).not.toContain('sha384-abc');
+  });
+});
+
+describe('extractSriRecords', () => {
+  it('extracts SRI records for every version that has a block', () => {
+    const changelog = [
+      '# Changelog',
+      '',
+      '## 1.0.1',
+      '',
+      '<!-- @hash-sri-start -->',
+      'checkout-button.js   sha384-BBB',
+      'checkout-button.mjs  sha384-CCC',
+      '<!-- @hash-sri-end -->',
+      '',
+      '## 1.0.0',
+      '',
+      'No SRI block backfilled yet.',
+      '',
+    ].join('\n');
+
+    const records = extractSriRecords(changelog);
+    expect(records.get('1.0.1')).toEqual({
+      'checkout-button.js': 'sha384-BBB',
+      'checkout-button.mjs': 'sha384-CCC',
+    });
+    expect(records.has('1.0.0')).toBe(false);
+  });
+
+  it('uses the first occurrence for a duplicated version heading', () => {
+    const changelog = [
+      '## 0.2.0',
+      '<!-- @hash-sri-start -->',
+      'checkout-button.js   sha384-FIRST',
+      '<!-- @hash-sri-end -->',
+      '',
+      '## 0.2.0',
+      '<!-- @hash-sri-start -->',
+      'checkout-button.js   sha384-SECOND',
+      '<!-- @hash-sri-end -->',
+      '',
+    ].join('\n');
+
+    expect(extractSriRecords(changelog).get('0.2.0')).toEqual({ 'checkout-button.js': 'sha384-FIRST' });
+  });
+
+  it('returns an empty map for a changelog with no SRI blocks', () => {
+    expect(extractSriRecords('# Changelog\n\n## 0.1.0\n\n- first\n').size).toBe(0);
   });
 });

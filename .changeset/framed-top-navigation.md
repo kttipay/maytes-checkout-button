@@ -1,5 +1,0 @@
----
-"@maytes/checkout-button": minor
----
-
-The button never loads the hosted checkout inside an iframe any more. When the button is rendered inside a frame (for example a booking widget embedded on the merchant's page), a phone or a narrow frame used to take the same-window fallback and navigate the frame itself, so the checkout ran as a cross-site iframe where its session cookie is rejected and sign-in ended on "Your session expired". The button now measures the top-level window (or the screen when the top window is cross-origin) and navigates the top-level window; if the browser refuses, it opens the checkout in a new tab; if both are refused, it dispatches `maytes:checkout-failed` with `reason: 'navigation-blocked'` and leaves the button usable. `maytes:checkout-redirected` now carries `detail.target` (`'self' | 'top' | 'tab'`). `redirectToCheckout()` follows the same rule and throws `MaytesError` when it cannot leave the frame. Merchants who deliberately relied on in-frame navigation will see the top-level page change instead; render the button in the top-level page if that is not wanted.

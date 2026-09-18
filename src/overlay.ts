@@ -1,4 +1,5 @@
 import { buildMaytesLogo, MAYTES_WALLET } from './branding.js';
+import { isSecurityError, sameOriginTop } from './framing.js';
 import type { InstanceState } from './state.js';
 
 const TITLE_ID = 'maytes-overlay-title';
@@ -6,16 +7,10 @@ const STYLE_MARKER = 'data-maytes-checkout-button-overlay-styles';
 const NATIVE_BACKDROP_FALLBACK = 'rgba(0, 0, 0, 0.6)';
 
 function tryReadTopDocument(): Document | null {
-  if (window.top === null || window.top === window) return null;
-  try {
-    const topDoc = window.top.document;
-    return topDoc.body !== null ? topDoc : null;
-  } catch (err) {
-    if (!(err instanceof DOMException && err.name === 'SecurityError')) {
-      console.warn('[maytes/checkout-button] unexpected error resolving overlay host', err);
-    }
-    return null;
-  }
+  const top = sameOriginTop();
+  if (top === null) return null;
+  const topDoc = top.document;
+  return topDoc.body !== null ? topDoc : null;
 }
 
 function resolveOverlayHost(): Document {
@@ -69,7 +64,7 @@ function buildOverlay(host: Document, state: InstanceState): HTMLDialogElement {
   link.addEventListener('click', () => {
     if (state.popupWindow !== null && !state.popupWindow.closed) {
       try { state.popupWindow.focus(); } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'SecurityError')) throw err;
+        if (!isSecurityError(err)) throw err;
       }
     }
   });

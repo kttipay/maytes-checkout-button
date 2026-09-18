@@ -8,6 +8,9 @@ export { Maytes };
 export { MaytesError, MaytesErrorCode } from './errors.js';
 export type { MaytesErrorCodeValue } from './errors.js';
 export type {
+  CheckoutFailedDetail,
+  CheckoutFailedReason,
+  CheckoutRedirectedDetail,
   CheckoutUrlOptions,
   CreateCheckoutFn,
   MaytesEnvironment,
@@ -16,6 +19,7 @@ export type {
   MaytesOptions,
   MaytesSDK,
   RedirectOptions,
+  RedirectTarget,
   RenderButtonCleanup,
   RenderButtonMode,
   RenderButtonOptions,

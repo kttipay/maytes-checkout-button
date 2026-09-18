@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode } from '../index.js';
+import { withTop, crossOriginTopWindow } from './framing-fakes.js';
 
 describe('maytes.checkoutUrl', () => {
   it('builds the URL with the sandbox base', () => {
@@ -100,5 +101,38 @@ describe('maytes.redirectToCheckout', () => {
     expect(() => maytes.redirectToCheckout({ checkoutId: '' })).toThrow(MaytesError);
     expect(assignSpy).not.toHaveBeenCalled();
     expect(replaceSpy).not.toHaveBeenCalled();
+  });
+
+  it('inside a same-origin iframe it navigates the top window and honours replace', async () => {
+    const topHref = vi.fn();
+    const topReplace = vi.fn();
+    const fakeTop = {
+      document: document.implementation.createHTMLDocument('top'),
+      innerWidth: 1280,
+      location: { set href(v: string) { topHref(v); }, replace: topReplace },
+    };
+    await withTop(fakeTop, async () => {
+      const maytes = Maytes({ createCheckout: async () => ({ checkoutId: 'x' }), environment: 'sandbox' });
+      maytes.redirectToCheckout({ checkoutId: 'abc' });
+      maytes.redirectToCheckout({ checkoutId: 'def', replace: true });
+    });
+    expect(topHref).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=abc');
+    expect(topReplace).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=def');
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).not.toHaveBeenCalled();
+  });
+
+  it('inside a cross-origin iframe it throws when neither the top window nor a tab can be opened', async () => {
+    const originalOpen = window.open;
+    window.open = vi.fn(() => null) as unknown as typeof window.open;
+    try {
+      await withTop(crossOriginTopWindow(() => { throw new DOMException('blocked', 'SecurityError'); }), async () => {
+        const maytes = Maytes({ createCheckout: async () => ({ checkoutId: 'x' }), environment: 'sandbox' });
+        expect(() => maytes.redirectToCheckout({ checkoutId: 'abc' })).toThrow(MaytesError);
+      });
+    } finally {
+      window.open = originalOpen;
+    }
+    expect(assignSpy).not.toHaveBeenCalled();
   });
 });

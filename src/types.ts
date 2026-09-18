@@ -29,6 +29,20 @@ export interface RenderButtonOptions {
 
 export type RenderButtonCleanup = () => void;
 
+export type RedirectTarget = 'self' | 'top' | 'tab';
+
+export interface CheckoutRedirectedDetail {
+  url: string;
+  target: RedirectTarget;
+}
+
+export type CheckoutFailedReason = 'create-checkout-rejected' | 'invalid-shape' | 'navigation-blocked';
+
+export interface CheckoutFailedDetail {
+  reason: CheckoutFailedReason;
+  cause?: unknown;
+}
+
 export interface CheckoutUrlOptions {
   checkoutId: string;
 }

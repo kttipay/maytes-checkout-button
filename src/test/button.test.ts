@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode, SDK_VERSION } from '../index.js';
 import { foundation } from '../foundation/brand.generated.js';
 import { POPUP_LOADING_CSS, resetStylesForTests } from '../styles.js';
+import { crossOriginTopWindow, detailOf, sameOriginTopWindow, withScreenWidth, withTop } from './framing-fakes.js';
 import type { MaytesSDK } from '../types.js';
 
 interface FakePopupLocation {
@@ -243,6 +244,7 @@ describe('maytes.renderButton', () => {
     expect(redirected).toHaveBeenCalledOnce();
     expect((redirected.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({
       url: 'https://sandbox-checkout.maytes.co/?id=blk',
+      target: 'self',
     });
     expect(failed).not.toHaveBeenCalled();
     document.removeEventListener('maytes:checkout-redirected', redirected);
@@ -861,6 +863,97 @@ describe('maytes.renderButton', () => {
     expect(popup.closed).toBe(true);
     expect(document.querySelectorAll('[data-maytes-overlay]').length).toBe(0);
     expect((failed.mock.calls[0]?.[0] as CustomEvent).detail.reason).toBe('invalid-shape');
+    document.removeEventListener('maytes:checkout-failed', failed);
+  });
+
+  it('inside a same-origin iframe on a phone it navigates the top window, not the frame', async () => {
+    const topHref = vi.fn();
+    const redirected = vi.fn();
+    document.addEventListener('maytes:checkout-redirected', redirected);
+    await withTop(sameOriginTopWindow(390, topHref), async () => {
+      Maytes({ createCheckout: async () => ({ checkoutId: 'frm' }), environment: 'sandbox' })
+        .renderButton(container, { mode: 'popup' });
+      container.querySelector('button')!.click();
+      await vi.waitFor(() => expect(topHref).toHaveBeenCalled());
+    });
+    expect(topHref).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=frm');
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(detailOf(redirected)).toEqual({ url: 'https://sandbox-checkout.maytes.co/?id=frm', target: 'top' });
+    document.removeEventListener('maytes:checkout-redirected', redirected);
+  });
+
+  it('inside a same-origin iframe the popup decision uses the top window width, not the frame width', async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 340 });
+    try {
+      await withTop(sameOriginTopWindow(1280, () => undefined), async () => {
+        makeInstance().renderButton(container, { mode: 'popup' });
+        container.querySelector('button')!.click();
+        await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
+      });
+      expect(openSpy).toHaveBeenCalledWith('about:blank', expect.stringMatching(/^maytes-checkout-/), expect.any(String));
+      expect(assignSpy).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
+    }
+  });
+
+  it('inside a cross-origin iframe it navigates the top window when the browser allows it', async () => {
+    const topHref = vi.fn();
+    const redirected = vi.fn();
+    document.addEventListener('maytes:checkout-redirected', redirected);
+    await withScreenWidth(390, () => withTop(crossOriginTopWindow(topHref), async () => {
+      makeInstance().renderButton(container);
+      container.querySelector('button')!.click();
+      await vi.waitFor(() => expect(topHref).toHaveBeenCalled());
+    }));
+    expect(topHref).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=x');
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(detailOf(redirected)).toEqual({ url: 'https://sandbox-checkout.maytes.co/?id=x', target: 'top' });
+    document.removeEventListener('maytes:checkout-redirected', redirected);
+  });
+
+  it('inside a cross-origin iframe a refused top navigation opens the checkout in a new tab', async () => {
+    const tab = { opener: {} as unknown };
+    openSpy.mockReturnValueOnce(tab as unknown as Window);
+    const redirected = vi.fn();
+    const failed = vi.fn();
+    document.addEventListener('maytes:checkout-redirected', redirected);
+    document.addEventListener('maytes:checkout-failed', failed);
+    await withScreenWidth(390, () => withTop(crossOriginTopWindow(() => { throw new DOMException('blocked', 'SecurityError'); }), async () => {
+      makeInstance().renderButton(container);
+      container.querySelector('button')!.click();
+      await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
+    }));
+    expect(openSpy).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=x', '_blank');
+    expect(tab.opener).toBeNull();
+    expect(detailOf(redirected)).toEqual({ url: 'https://sandbox-checkout.maytes.co/?id=x', target: 'tab' });
+    expect(failed).not.toHaveBeenCalled();
+    document.removeEventListener('maytes:checkout-redirected', redirected);
+    document.removeEventListener('maytes:checkout-failed', failed);
+  });
+
+  it('inside a cross-origin iframe with both ways out refused it fails loudly and re-enables the button', async () => {
+    const blocked = new DOMException('blocked', 'SecurityError');
+    openSpy.mockReturnValueOnce(null);
+    const redirected = vi.fn();
+    const failed = vi.fn();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    document.addEventListener('maytes:checkout-redirected', redirected);
+    document.addEventListener('maytes:checkout-failed', failed);
+    await withScreenWidth(390, () => withTop(crossOriginTopWindow(() => { throw blocked; }), async () => {
+      makeInstance().renderButton(container);
+      container.querySelector('button')!.click();
+      await vi.waitFor(() => expect(failed).toHaveBeenCalled());
+    }));
+    expect(detailOf(failed)).toEqual({ reason: 'navigation-blocked', cause: blocked });
+    expect(redirected).not.toHaveBeenCalled();
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(container.querySelector('button')!.getAttribute('aria-disabled')).toBeNull();
+    expect(document.querySelectorAll('[data-maytes-overlay]').length).toBe(0);
+    consoleError.mockRestore();
+    document.removeEventListener('maytes:checkout-redirected', redirected);
     document.removeEventListener('maytes:checkout-failed', failed);
   });
 });

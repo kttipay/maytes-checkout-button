@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -57,14 +58,30 @@ jobs:
             dist/integrity.json \
             --repo "${{ github.repository }}" --clobber
 
+      - name: Cache CDN release history
+        uses: actions/cache@v4
+        with:
+          path: .cdn-history-cache
+          key: cdn-history-${{ github.run_id }}
+          restore-keys: |
+            cdn-history-
+
+      - name: Rehydrate CDN release history
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/rehydrate-cdn-history.mjs
+
       - name: Deploy bundle to CDN
         if: steps.changesets.outputs.published == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
           node scripts/cdn-config.mjs
           npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
+          node scripts/ensure-cdn-cache-rules.mjs
 
   cdn-deploy:
     if: github.event_name == 'workflow_dispatch'
@@ -73,6 +90,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -82,13 +102,29 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+
+      - name: Cache CDN release history
+        uses: actions/cache@v4
+        with:
+          path: .cdn-history-cache
+          key: cdn-history-${{ github.run_id }}
+          restore-keys: |
+            cdn-history-
+
+      - name: Rehydrate CDN release history
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/rehydrate-cdn-history.mjs
+
       - name: Deploy bundle to CDN
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
           node scripts/cdn-config.mjs
           npx wrangler@3 pages deploy dist --project-name=checkout-button --branch=main
+          node scripts/ensure-cdn-cache-rules.mjs
       - name: Backfill release assets for the current version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

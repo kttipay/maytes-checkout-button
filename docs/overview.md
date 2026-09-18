@@ -27,12 +27,12 @@ Each release is served from `https://js.maytes.co` under four URL forms:
 
 | Form | Example | Cache | SRI |
 |---|---|---|---|
-| SemVer pin | `/v<version>/checkout-button.js` | 1 yr, immutable | yes |
-| Content-hash pin | `/checkout-button.<8-char-sha256>.js` | 1 yr, immutable | yes |
+| SemVer pin | `/v<version>/checkout-button.js` | 1 yr | yes |
+| Content-hash pin | `/checkout-button.<8-char-sha256>.js` | 1 yr | yes |
 | Rolling (dev only) | `/dev/checkout-button.js` | ~5 min | no (bytes roll) |
 | Evergreen major (opt-in) | `/v<major>/checkout-button.js` | ~5 min | no (bytes roll) |
 
-Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; track `/dev/` only for development / staging auto-updates. An opt-in `/v1/`-style evergreen major channel also exists for merchants who explicitly choose auto-updates over the pin-safety guarantee — see [`cdn-versioning.md`](./cdn-versioning.md) and [`cdn-pin-durability-and-evergreen-v1.md`](./cdn-pin-durability-and-evergreen-v1.md) for the reasoning and the implementation design. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
+Pin a SemVer or hashed URL for production and set `<script integrity="…">` for tamper protection; track `/dev/` only for development / staging auto-updates. An opt-in `/v1/`-style evergreen major channel also exists for merchants who explicitly choose auto-updates over the pin-safety guarantee — see [`cdn-versioning.md`](./cdn-versioning.md) for the reasoning. `integrity.json` at the CDN root lists the version, hash, and SRI for every bundle; hashing, SRI generation, and CSP linting all run in `npm run build`.
 
 CDN plumbing: Cloudflare Pages project `checkout-button` (Maytes account). The release workflow deploys `dist/` via `wrangler pages deploy`. `scripts/cdn-config.mjs` emits `_headers` — the fixed global/security headers plus CORS, the short-cached `/dev/*` alias, and `/integrity.json` — and `_redirects`, which rewrites every release's SemVer and evergreen paths onto its hashed bundle. `Cache-Control` for the pins and the evergreen alias comes from Cloudflare Cache Rules, provisioned by `scripts/ensure-cdn-cache-rules.mjs`, not from `_headers`.
 

@@ -81,6 +81,21 @@ describe('immutable-pins rule composition (wildcard + unhashed-bundle exclusion)
     expect(matchesImmutablePinRule('/checkout-button.mjs.map')).toBe(false);
     expect(matchesImmutablePinRule('/checkout-button.cjs.map')).toBe(false);
   });
+
+  it('does not match the type declaration files tsup also writes to dist root', () => {
+    expect(matchesImmutablePinRule('/checkout-button.d.ts')).toBe(false);
+    expect(matchesImmutablePinRule('/checkout-button.d.cts')).toBe(false);
+  });
+
+  it('every UNHASHED_BUNDLE_PATHS entry is actually excluded from the composed CACHE_RULES[0] expression', () => {
+    for (const path of UNHASHED_BUNDLE_PATHS) {
+      expect(CACHE_RULES[0].expression).toContain(`not (http.request.uri.path eq "${path}")`);
+    }
+  });
+
+  it('CACHE_RULES[1] retains the exclusion that stops it from overriding immutable pins', () => {
+    expect(CACHE_RULES[1].expression).toContain(`not (http.request.uri.path wildcard "${SEMVER_PIN_WILDCARD}")`);
+  });
 });
 
 describe('rulesetNeedsUpdate', () => {

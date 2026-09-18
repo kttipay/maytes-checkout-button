@@ -2,11 +2,11 @@
 
 > Decision record + reasoning. Captures the recurring question of how merchants consume the SDK from the CDN: development evergreen vs production pins, and pinned files named by content-hash vs SemVer (e.g. `js.maytes.co/v1.0.0/checkout-button.js`).
 
-**Current scheme (the conclusion):** production pins by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI. `js.maytes.co/dev/checkout-button.js` is a rolling, short-cached channel for development and staging only. There is no `/v1/`-style evergreen major channel. The rest of this doc is the reasoning behind that.
+**Current scheme (the conclusion):** production pins by SemVer (`js.maytes.co/v1.0.0/checkout-button.js`) or content hash (`js.maytes.co/checkout-button.<sha256>.js`), both protected with SRI — this is the default and the recommendation below. An opt-in evergreen major channel (`js.maytes.co/v1/checkout-button.js`, no SRI possible) also exists for merchants who explicitly want auto-updates over the pin-safety guarantee. `js.maytes.co/dev/checkout-button.js` is a rolling, short-cached channel for development and staging only. The rest of this doc is the reasoning behind the pin-by-default recommendation.
 
 ## Two independent axes
 
-1. **Channel** — development evergreen `/dev/` vs an exact production pin.
+1. **Channel** — a three-way choice: the development-only rolling `/dev/`, an exact production pin (the default), or the opt-in production evergreen `/v<major>/`.
 2. **Pinned-file naming** — content-hash (`checkout-button.<sha256>.js`) vs semver (`checkout-button-0.1.0.js`).
 
 ## What others actually ship
@@ -39,6 +39,7 @@ A content-hash filename is immutable **by construction** (the name is derived fr
 - **Default for production: pinned + SRI** — `https://js.maytes.co/v1.0.0/checkout-button.js` or `https://js.maytes.co/checkout-button.<sha256>.js`. Stable for the merchant, caches a year, and can be protected with SRI. The merchant picks a version from the release notes, which map each version to its SemVer path, hashed file, and SRI.
   - **Hash remains the strongest byte-level pin.** The hash is a fingerprint of the bytes, so the URL can never silently serve different code. The SemVer path is a readable release pin and must be used with SRI.
 - **Development-only rolling channel** — `https://js.maytes.co/dev/checkout-button.js` (short cache) for internal dev/staging and merchant test environments that explicitly want auto-updates. Do not use it in production.
+- **Opt-in evergreen for production** — `https://js.maytes.co/v1/checkout-button.js` (no SRI possible, ~5 min cache), for merchants who explicitly want to trade the pin-safety guarantee for automatic updates within a major version. Not the default, not promoted as the primary integration path, and not a substitute for shipping fixes promptly to pinned merchants — a fix ships the same way either way (a new release).
 - **Semver stays the human source of truth** — npm version, changelog, GitHub Releases — each mapped to its hashed file + SRI.
 
 ### Back pocket: a readable semver URL, if ever wanted
@@ -54,5 +55,5 @@ It's semver, **immutable for free** (npm forbids re-publishing a version), and S
 ## Status
 
 - **Implemented:** IIFE minification; the rolling `/dev/` channel, self-hosted SemVer aliases, hashed files, and SRI generation all exist.
-- **Decision:** production uses pinned SemVer or hash URLs with SRI. Evergreen is development/staging only.
-- **Caveat to honour:** this default holds **as long as the SDK stays a redirect/popup button.** If card fields ever move in-browser, revisit toward evergreen (you'd inherit Stripe's hot-patch constraint).
+- **Decision:** production defaults to pinned SemVer or hash URLs with SRI. `/v1/` evergreen exists as an explicit opt-in — it is not the recommended default and is not a hot-fix mechanism.
+- **Caveat to honour:** the pin-by-default *recommendation* holds **as long as the SDK stays a redirect/popup button.** If card fields ever move in-browser, revisit toward evergreen-by-default — that's Stripe's actual constraint, which this SDK still doesn't have.

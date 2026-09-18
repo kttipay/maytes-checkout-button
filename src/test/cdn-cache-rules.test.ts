@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { CACHE_RULES, rulesetNeedsUpdate } from '../../scripts/lib/cdn-cache-rules.mjs';
+import {
+  CACHE_RULES,
+  EVERGREEN_WILDCARD,
+  HASH_PIN_WILDCARD,
+  SEMVER_PIN_WILDCARD,
+  rulesetNeedsUpdate,
+} from '../../scripts/lib/cdn-cache-rules.mjs';
+
+function wildcardMatches(pattern: string, path: string): boolean {
+  const escaped = pattern
+    .split('*')
+    .map((segment) => segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+    .join('.*');
+  return new RegExp(`^${escaped}$`).test(path);
+}
 
 describe('CACHE_RULES', () => {
   it('defines exactly 2 fixed rules', () => {
@@ -10,6 +24,31 @@ describe('CACHE_RULES', () => {
     for (const rule of CACHE_RULES) {
       expect(rule.expression).toContain('http.host eq "js.maytes.co"');
     }
+  });
+});
+
+describe('wildcard pattern disambiguation', () => {
+  it('matches a pinned SemVer path against the SemVer pattern', () => {
+    expect(wildcardMatches(SEMVER_PIN_WILDCARD, '/v1.0.1/checkout-button.js')).toBe(true);
+    expect(wildcardMatches(SEMVER_PIN_WILDCARD, '/v1.0.1/checkout-button.mjs')).toBe(true);
+  });
+
+  it('does not match the bare-major evergreen path against the SemVer pattern', () => {
+    expect(wildcardMatches(SEMVER_PIN_WILDCARD, '/v1/checkout-button.js')).toBe(false);
+  });
+
+  it('matches a content-hash path against the hash pattern, not the bare unhashed file', () => {
+    expect(wildcardMatches(HASH_PIN_WILDCARD, '/checkout-button.8c71493e.js')).toBe(true);
+    expect(wildcardMatches(HASH_PIN_WILDCARD, '/checkout-button.8c71493e.js.map')).toBe(true);
+    expect(wildcardMatches(HASH_PIN_WILDCARD, '/checkout-button.js')).toBe(false);
+  });
+
+  it('matches the bare-major evergreen path against the evergreen pattern', () => {
+    expect(wildcardMatches(EVERGREEN_WILDCARD, '/v1/checkout-button.js')).toBe(true);
+  });
+
+  it('also matches a pinned SemVer path against the evergreen pattern alone, which is why rule 2 excludes rule 1', () => {
+    expect(wildcardMatches(EVERGREEN_WILDCARD, '/v1.0.1/checkout-button.js')).toBe(true);
   });
 });
 

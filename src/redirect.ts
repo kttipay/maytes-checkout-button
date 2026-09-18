@@ -1,5 +1,6 @@
 import { MaytesError, MaytesErrorCode } from './errors.js';
 import { resolveBaseUrl, type InternalEnvironment } from './env.js';
+import { navigateTopLevel } from './framing.js';
 import type { CheckoutUrlOptions, RedirectOptions } from './types.js';
 
 export function isHttpUrl(value: string): boolean {
@@ -53,10 +54,12 @@ export function performRedirect(url: string, replace: boolean): void {
       'redirectToCheckout requires a browser context (window is undefined)',
     );
   }
-  if (replace) {
-    window.location.replace(url);
-  } else {
-    window.location.href = url;
+  const outcome = navigateTopLevel(url, replace);
+  if (outcome.target === null) {
+    throw new MaytesError(
+      MaytesErrorCode.Config,
+      'redirectToCheckout could not leave the embedding iframe; call it from a user gesture or from the top-level page',
+    );
   }
 }
 

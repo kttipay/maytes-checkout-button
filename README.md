@@ -18,7 +18,7 @@
 
 ---
 
-Renders a button and launches the Maytes-hosted checkout. Default mode is same-window redirect; `mode: 'popup'` opts desktop browsers into a centered popup with a branded loader and redirect fallback on mobile or when blocked.
+Renders a button and launches the Maytes-hosted checkout in the top-level window. Default mode is same-window redirect; `mode: 'popup'` opts wide viewports into a centered popup with a branded loader and falls back to a redirect on phones or when the popup is blocked. Inside an iframe the redirect always targets the top-level window.
 
 **📖 Full integration guide:** [developers.maytes.co/checkout-button](https://developers.maytes.co/checkout-button)
 
@@ -125,6 +125,10 @@ Via the script tag, the same factory is available as the global `window.Maytes(.
 | `redirectToCheckout(options)` | Launch checkout directly (no button). |
 | `checkoutUrl(options)` | Build the hosted checkout URL. |
 | `destroy()` | Tear down the instance and its listeners — call this on unmount or when the instance's config/environment changes, not as a reaction to detecting payment success from your own polling (that can tear down a checkout that's still in progress). To remove a single button, use the cleanup function returned by `renderButton()` or hide/disable the button element instead. |
+
+### Inside an iframe?
+
+The hosted checkout must run in the top-level window (its session cookie is refused inside a cross-site frame). If you render the button inside an iframe, the SDK navigates the top-level window; if the browser refuses, it opens a new tab; if both are refused it dispatches `maytes:checkout-failed` with `reason: 'navigation-blocked'`. When the checkout opens in a new tab, no popup poll starts and no `maytes:checkout-opened` / `maytes:checkout-closed` pair fires — you'll only see `maytes:checkout-redirected` with `target: 'tab'`. A sandboxed iframe needs `allow-scripts allow-same-origin allow-top-navigation` (plus `allow-popups allow-popups-to-escape-sandbox` for the tab fallback). Listen to `maytes:checkout-redirected` and read `event.detail.target` (`'self'`, `'top'` or `'tab'`) if your page needs to know where the checkout went. Rendering the button in the top-level page avoids all of this.
 
 ## Mobile app
 

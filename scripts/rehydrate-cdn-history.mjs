@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractSriRecords } from './lib/changelog.mjs';
@@ -23,7 +23,7 @@ if (!existsSync(currentIntegrityPath)) {
 }
 const currentIntegrity = readJson(currentIntegrityPath);
 
-const tags = execFileSync('git', ['tag', '-l', 'v*'], { cwd: sdkRoot, encoding: 'utf8' })
+const tags = execFileSync('git', ['tag', '-l', 'v[0-9]*'], { cwd: sdkRoot, encoding: 'utf8' })
   .split('\n')
   .map((line) => line.trim())
   .filter(Boolean)
@@ -45,21 +45,24 @@ const releases = [currentIntegrity];
 for (const tag of tags) {
   const version = tag.slice(1);
   const tagCacheDir = resolve(cacheRoot, tag);
-  mkdirSync(tagCacheDir, { recursive: true });
-
+  const sentinelPath = resolve(tagCacheDir, '.complete');
   const integrityPath = resolve(tagCacheDir, 'integrity.json');
-  if (!existsSync(integrityPath)) {
-    execFileSync(
-      'gh',
-      [
-        'release', 'download', tag,
-        '--pattern', 'integrity.json',
-        '--pattern', 'checkout-button.*',
-        '--dir', tagCacheDir,
-        '--clobber',
-      ],
-      { cwd: sdkRoot, stdio: 'inherit' },
-    );
+
+  if (!existsSync(sentinelPath)) {
+    rmSync(tagCacheDir, { recursive: true, force: true });
+    mkdirSync(tagCacheDir, { recursive: true });
+
+    const downloadArgs = [
+      'release', 'download', tag,
+      '--pattern', 'integrity.json',
+      '--pattern', 'checkout-button.*',
+      '--dir', tagCacheDir,
+      '--clobber',
+    ];
+    if (process.env.GITHUB_REPOSITORY) {
+      downloadArgs.push('--repo', process.env.GITHUB_REPOSITORY);
+    }
+    execFileSync('gh', downloadArgs, { cwd: sdkRoot, stdio: 'inherit' });
   }
 
   const integrity = readJson(integrityPath);
@@ -93,6 +96,7 @@ for (const tag of tags) {
     }
   }
 
+  writeFileSync(sentinelPath, '');
   releases.push(integrity);
 }
 

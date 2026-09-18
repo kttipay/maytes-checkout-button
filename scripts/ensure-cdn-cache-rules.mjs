@@ -20,7 +20,14 @@ function toApiRule(rule) {
     action: 'set_cache_settings',
     action_parameters: {
       cache: true,
-      edge_ttl: { mode: 'override_origin', default: rule.edgeTtl },
+      edge_ttl: {
+        mode: 'override_origin',
+        default: rule.edgeTtl,
+        status_code_ttl: (rule.edgeTtlStatusCodeOverrides ?? []).map(({ statusCode, ttl }) => ({
+          status_code: statusCode,
+          value: ttl,
+        })),
+      },
       browser_ttl: { mode: 'override_origin', default: rule.browserTtl },
     },
   };
@@ -32,6 +39,9 @@ function fromApiRule(apiRule) {
     expression: apiRule.expression,
     edgeTtl: apiRule.action_parameters?.edge_ttl?.default,
     browserTtl: apiRule.action_parameters?.browser_ttl?.default,
+    edgeTtlStatusCodeOverrides: (apiRule.action_parameters?.edge_ttl?.status_code_ttl ?? []).map(
+      ({ status_code, value }) => ({ statusCode: status_code, ttl: value }),
+    ),
   };
 }
 

@@ -96,6 +96,10 @@ describe('immutable-pins rule composition (wildcard + unhashed-bundle exclusion)
   it('CACHE_RULES[1] retains the exclusion that stops it from overriding immutable pins', () => {
     expect(CACHE_RULES[1].expression).toContain(`not (http.request.uri.path wildcard "${SEMVER_PIN_WILDCARD}")`);
   });
+
+  it('does not let a 404 inherit the immutable-pins long TTL', () => {
+    expect(CACHE_RULES[0].edgeTtlStatusCodeOverrides).toEqual([{ statusCode: 404, ttl: 0 }]);
+  });
 });
 
 describe('rulesetNeedsUpdate', () => {
@@ -118,5 +122,10 @@ describe('rulesetNeedsUpdate', () => {
 
     const staleBrowserTtl = [CACHE_RULES[0], { ...CACHE_RULES[1], browserTtl: 60 }];
     expect(rulesetNeedsUpdate(staleBrowserTtl)).toBe(true);
+  });
+
+  it('reports an update needed when the status-code TTL overrides changed', () => {
+    const staleOverrides = [{ ...CACHE_RULES[0], edgeTtlStatusCodeOverrides: [] }, CACHE_RULES[1]];
+    expect(rulesetNeedsUpdate(staleOverrides)).toBe(true);
   });
 });

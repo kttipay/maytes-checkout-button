@@ -32,6 +32,7 @@ export const CACHE_RULES = [
     ),
     edgeTtl: 31536000,
     browserTtl: 31536000,
+    edgeTtlStatusCodeOverrides: [{ statusCode: 404, ttl: 0 }],
   },
   {
     id: 'checkout-button-evergreen-major',
@@ -50,7 +51,9 @@ export function rulesetNeedsUpdate(currentRules, desiredRules = CACHE_RULES) {
     return (
       current.expression !== desired.expression ||
       current.edgeTtl !== desired.edgeTtl ||
-      current.browserTtl !== desired.browserTtl
+      current.browserTtl !== desired.browserTtl ||
+      JSON.stringify(current.edgeTtlStatusCodeOverrides ?? []) !==
+        JSON.stringify(desired.edgeTtlStatusCodeOverrides ?? [])
     );
   });
 }

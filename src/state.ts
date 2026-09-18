@@ -4,6 +4,7 @@ export interface InstanceState {
   config: MaytesOptions & MaytesInternalOptions;
   busy: boolean;
   overlayEl: HTMLDialogElement | null;
+  overlayDetach: (() => void) | null;
   popupWindow: Window | null;
   popupNavigated: boolean;
   popupName: string;
@@ -41,6 +42,7 @@ export function createInstanceState(
     config,
     busy: false,
     overlayEl: null,
+    overlayDetach: null,
     popupWindow: null,
     popupNavigated: false,
     popupName: generatePopupName(),

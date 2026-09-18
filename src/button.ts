@@ -1,11 +1,19 @@
 import { buildMaytesLogo } from './branding.js';
 import { foundation } from './foundation/brand.generated.js';
 import { MaytesError, MaytesErrorCode } from './errors.js';
+import { isSecurityError, navigateTopLevel, viewportWidth } from './framing.js';
 import { hideOverlay, showOverlay } from './overlay.js';
 import { buildCheckoutUrl, isHttpUrl } from './redirect.js';
 import { ensureStylesInjected, POPUP_LOADING_CSS, releaseStyles } from './styles.js';
 import type { InstanceState } from './state.js';
-import type { RenderButtonCleanup, RenderButtonMode, RenderButtonOptions } from './types.js';
+import type {
+  CheckoutFailedReason,
+  CheckoutRedirectedDetail,
+  RedirectTarget,
+  RenderButtonCleanup,
+  RenderButtonMode,
+  RenderButtonOptions,
+} from './types.js';
 
 const POPUP_WIDTH = 500;
 const POPUP_HEIGHT = 800;
@@ -36,10 +44,6 @@ function isValidCheckoutResult(value: unknown): value is { checkoutId: string; c
     if (!isHttpUrl(obj.checkoutUrl)) return false;
   }
   return true;
-}
-
-function isSecurityError(err: unknown): boolean {
-  return err instanceof DOMException && err.name === 'SecurityError';
 }
 
 function refocusPopup(popup: Window): void {
@@ -85,7 +89,7 @@ function startPopupPoll(state: InstanceState, onClose: () => void): void {
 }
 
 function isMobileViewport(): boolean {
-  return window.innerWidth <= MOBILE_MAX_WIDTH;
+  return viewportWidth() <= MOBILE_MAX_WIDTH;
 }
 
 function openBlankPopup(state: InstanceState): Window | null {
@@ -206,20 +210,26 @@ export function renderButton(
     document.dispatchEvent(new CustomEvent('maytes:checkout-closed'));
   };
 
-  const dispatchFailed = (reason: string, cause?: unknown): void => {
+  const dispatchFailed = (reason: CheckoutFailedReason, cause?: unknown): void => {
     document.dispatchEvent(new CustomEvent('maytes:checkout-failed', {
       detail: cause === undefined ? { reason } : { reason, cause },
     }));
   };
 
-  const dispatchRedirected = (url: string): void => {
-    document.dispatchEvent(new CustomEvent('maytes:checkout-redirected', { detail: { url } }));
+  const dispatchRedirected = (url: string, target: RedirectTarget): void => {
+    const detail: CheckoutRedirectedDetail = { url, target };
+    document.dispatchEvent(new CustomEvent('maytes:checkout-redirected', { detail }));
   };
 
-  const redirectSameWindow = (url: string): void => {
+  const navigateAway = (url: string): void => {
+    const outcome = navigateTopLevel(url, false);
     teardownActiveCheckout();
-    dispatchRedirected(url);
-    window.location.href = url;
+    if (outcome.target === null) {
+      console.error('[maytes/checkout-button] could not leave the embedding frame:', outcome.cause);
+      dispatchFailed('navigation-blocked', outcome.cause);
+      return;
+    }
+    dispatchRedirected(url, outcome.target);
   };
 
   const closeOrphanPopup = (popup: Window | null): void => {
@@ -269,9 +279,9 @@ export function renderButton(
         navigatePopup(popup, url);
       } else {
         if (shouldUsePopup) {
-          console.warn('[maytes/checkout-button] popup was blocked; falling back to same-window redirect');
+          console.warn('[maytes/checkout-button] popup was blocked; redirecting instead');
         }
-        redirectSameWindow(url);
+        navigateAway(url);
       }
     } catch (err) {
       if (popup !== null && popup.closed) return;

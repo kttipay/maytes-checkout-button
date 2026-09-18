@@ -96,4 +96,25 @@ describe('framing', () => {
       },
     );
   });
+
+  it('treats a SecurityError raised in another realm as a refusal of the top window', async () => {
+    const foreignRealmSecurityError = Object.assign(new Error('blocked'), { name: 'SecurityError', code: 18 });
+    const tab = { opener: {} as unknown };
+    const originalOpen = window.open;
+    window.open = vi.fn(() => tab as unknown as Window) as unknown as typeof window.open;
+    try {
+      await withTop(crossOriginTopWindow(() => { throw foreignRealmSecurityError; }), async () => {
+        expect(navigateTopLevel('https://checkout.maytes.co/?id=1', false)).toEqual({ target: 'tab' });
+      });
+    } finally {
+      window.open = originalOpen;
+    }
+  });
+
+  it('treats a SecurityError raised in another realm as a cross-origin top window', async () => {
+    const foreignRealmSecurityError = Object.assign(new Error('blocked'), { name: 'SecurityError', code: 18 });
+    await withTop({ get document(): never { throw foreignRealmSecurityError; } }, async () => {
+      expect(sameOriginTop()).toBeNull();
+    });
+  });
 });

@@ -6,7 +6,7 @@ export interface NavigationOutcome {
 }
 
 export function isSecurityError(err: unknown): boolean {
-  return err instanceof DOMException && err.name === 'SecurityError';
+  return typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'SecurityError';
 }
 
 export function isFramed(): boolean {

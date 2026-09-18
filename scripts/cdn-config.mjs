@@ -12,10 +12,17 @@ if (!existsSync(integrityPath)) {
 }
 const integrity = JSON.parse(readFileSync(integrityPath, 'utf8'));
 
-const { headers, redirects } = buildCdnConfig(integrity);
+const manifestPath = resolve(dist, '_releases-manifest.json');
+const hasManifest = existsSync(manifestPath);
+const releases = hasManifest ? JSON.parse(readFileSync(manifestPath, 'utf8')) : [integrity];
+
+const { headers, redirects } = buildCdnConfig(releases);
 
 writeFileSync(join(dist, '_headers'), headers);
 writeFileSync(join(dist, '_redirects'), redirects);
 console.log(
-  `[cdn-config] wrote dist/_headers (${Object.keys(integrity.files).length} immutable bundles) and dist/_redirects`,
+  `[cdn-config] wrote dist/_headers and dist/_redirects for ${releases.length} release(s)` +
+    (hasManifest
+      ? ''
+      : ' (no _releases-manifest.json — current release only; run "npm run cdn-rehydrate" first for full history)'),
 );

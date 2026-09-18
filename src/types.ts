@@ -29,6 +29,8 @@ export interface RenderButtonOptions {
 
 export type RenderButtonCleanup = () => void;
 
+export type RedirectTarget = 'self' | 'top' | 'tab';
+
 export interface CheckoutUrlOptions {
   checkoutId: string;
 }

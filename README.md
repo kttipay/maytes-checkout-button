@@ -18,7 +18,7 @@
 
 ---
 
-Renders a button and launches the Maytes-hosted checkout. Default mode is same-window redirect; `mode: 'popup'` opts desktop browsers into a centered popup with a branded loader and redirect fallback on mobile or when blocked.
+Renders a button and launches the Maytes-hosted checkout. Default mode opens a centered popup on desktop browsers, with a branded loader and automatic same-window redirect fallback on mobile or when the popup is blocked; `mode: 'redirect'` opts into a same-window redirect always.
 
 **📖 Full integration guide:** [developers.maytes.co/checkout-button](https://developers.maytes.co/checkout-button)
 
@@ -104,8 +104,8 @@ const maytes = Maytes({
 
 const cleanup = maytes.renderButton(document.getElementById('slot'), { block: true });
 
-// Optional popup mode:
-maytes.renderButton(document.getElementById('popup-slot'), { block: true, mode: 'popup' });
+// Opt into same-window redirect instead of the default popup:
+maytes.renderButton(document.getElementById('redirect-slot'), { block: true, mode: 'redirect' });
 
 // Imperative alternatives:
 maytes.redirectToCheckout({ checkoutId });
@@ -123,7 +123,7 @@ Via the script tag, the same factory is available as the global `window.Maytes(.
 | Method | Purpose |
 |---|---|
 | `Maytes(options)` | Create an SDK instance. `options.createCheckout` mints a checkout server-side; `options.environment` selects the Maytes environment. |
-| `renderButton(container, options?)` | Render the button into `container`; returns a cleanup function. Options include `label`, `block`, and `mode: 'redirect' \| 'popup'`. |
+| `renderButton(container, options?)` | Render the button into `container`; returns a cleanup function. Options include `label`, `block`, and `mode: 'redirect' \| 'popup'` (default `'popup'`). |
 | `redirectToCheckout(options)` | Launch checkout directly (no button). |
 | `checkoutUrl(options)` | Build the hosted checkout URL. |
 | `destroy()` | Tear down the instance and its listeners — call this on unmount or when the instance's config/environment changes, not as a reaction to detecting payment success from your own polling (that can tear down a checkout that's still in progress). To remove a single button, use the cleanup function returned by `renderButton()` or hide/disable the button element instead. |

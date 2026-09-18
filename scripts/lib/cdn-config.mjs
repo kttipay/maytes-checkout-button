@@ -1,7 +1,9 @@
+import { latestPerMajor } from './semver-lite.mjs';
+
 export const DEV_CHANNEL_PREFIX = '/dev';
 export const CDN_ORIGIN = 'https://js.maytes.co';
 
-const CACHE_IMMUTABLE = 'Cache-Control: public, max-age=31536000, immutable';
+const CACHE_SHORT = 'Cache-Control: public, max-age=300';
 
 export function cdnUrl(path) {
   return `${CDN_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
@@ -19,16 +21,17 @@ export function hashedUrl(hashedName) {
   return cdnUrl(hashedName);
 }
 
-export function buildCdnConfig(integrity) {
-  const files = Object.entries(integrity.files);
-  const immutablePaths = files.flatMap(([sourceName, meta]) => [
-    `/${meta.hashedName}`,
-    semverPath(integrity.version, sourceName),
-  ]);
+export function majorPath(version, sourceName) {
+  const major = version.split('.')[0];
+  return `/v${major}/${sourceName}`;
+}
 
-  const immutableBlocks = immutablePaths
-    .map((path) => `${path}\n  ${CACHE_IMMUTABLE}`)
-    .join('\n\n');
+export function majorUrl(version, sourceName) {
+  return cdnUrl(majorPath(version, sourceName));
+}
+
+export function buildCdnConfig(releases) {
+  const current = releases[0];
 
   const headers = `/*
   Access-Control-Allow-Origin: *
@@ -37,20 +40,33 @@ export function buildCdnConfig(integrity) {
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 ${DEV_CHANNEL_PREFIX}/*
-  Cache-Control: public, max-age=300
+  ${CACHE_SHORT}
 
 /integrity.json
   Cache-Control: public, max-age=60
-
-${immutableBlocks}
 `;
 
-  const redirects = files
-    .flatMap(([sourceName, meta]) => [
-      `${DEV_CHANNEL_PREFIX}/${sourceName}   /${sourceName}   200`,
-      `${semverPath(integrity.version, sourceName)}   /${meta.hashedName}   200`,
-    ])
-    .join('\n') + '\n';
+  const devRedirects = Object.keys(current.files).map(
+    (sourceName) => `${DEV_CHANNEL_PREFIX}/${sourceName}   /${sourceName}   200`,
+  );
+
+  const pinRedirects = releases.flatMap(({ version, files }) =>
+    Object.entries(files).map(
+      ([sourceName, meta]) => `${semverPath(version, sourceName)}   /${meta.hashedName}   200`,
+    ),
+  );
+
+  const releaseByVersion = new Map(releases.map((release) => [release.version, release]));
+  const latestByMajor = latestPerMajor(releases.map((release) => release.version));
+
+  const evergreenRedirects = [...latestByMajor.values()].flatMap((version) => {
+    const release = releaseByVersion.get(version);
+    return Object.entries(release.files).map(
+      ([sourceName, meta]) => `${majorPath(version, sourceName)}   /${meta.hashedName}   200`,
+    );
+  });
+
+  const redirects = [...devRedirects, ...pinRedirects, ...evergreenRedirects].join('\n') + '\n';
 
   return { headers, redirects };
 }

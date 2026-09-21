@@ -1,6 +1,6 @@
 # `@maytes/checkout-button` — Technical Overview
 
-> For the merchant-facing integration guide, see [`INTEGRATION.md`](https://github.com/kttipay/checkout-web/blob/develop/INTEGRATION.md) at the repo root. This document covers internals.
+> For the merchant-facing integration guide, see the [integration guide](https://developers.maytes.co/checkout-button) and [`README.md`](../README.md). This document covers internals.
 
 ## Purpose
 
@@ -206,7 +206,6 @@ State is **per-instance** (`createInstanceState`) — there is no module-level s
 ### Unit tests
 
 ```bash
-cd checkout-button
 npm test              # vitest in watch mode
 npm run test:run      # single-shot, used by CI
 npm run typecheck     # tsc --noEmit
@@ -239,7 +238,6 @@ Manual end-to-end verification against a real (sandbox) checkout requires a merc
 ### CSP / integrity verification
 
 ```bash
-cd checkout-button
 npm run build                  # rebuilds bundles + csp-check + hash-and-sri
 cat dist/integrity.json        # SRI hashes for each bundle
 ```
@@ -260,7 +258,7 @@ The Maytes-hosted checkout the button navigates to is a separate, backend-owned 
 
 ## Mobile app deep links
 
-The button hands off only to the merchant's `return_url` / `cancel_url` — it never links to the Maytes app directly. Separately, the **paylinks** app (`app.maytes.co`, `staging-app.maytes.co`) serves `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json` (from `apps/maytespaylinks/src/jsMain/resources/public/.well-known/`), so the payment links shoppers share with mates open in the Maytes app on installed devices via iOS Universal Links / Android App Links, falling back to the browser otherwise. Nothing in this SDK configures or depends on that; it is noted here only because the end-to-end "split with mates" flow terminates on those links.
+The button hands off only to the merchant's `return_url` / `cancel_url` — it never links to the Maytes app directly. Separately, the **paylinks** app (`app.maytes.co`, `staging-app.maytes.co`) serves `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`, so the payment links shoppers share with mates open in the Maytes app on installed devices via iOS Universal Links / Android App Links, falling back to the browser otherwise. Nothing in this SDK configures or depends on that; it is noted here only because the end-to-end "split with mates" flow terminates on those links.
 
 ## Deferred / known follow-ups
 

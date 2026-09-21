@@ -4,7 +4,7 @@ This folder is managed by [Changesets](https://github.com/changesets/changesets)
 
 ## Adding a change
 
-Run from `checkout-button/`:
+Run from the repository root:
 
 ```bash
 npm run changeset

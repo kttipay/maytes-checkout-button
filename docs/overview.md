@@ -254,7 +254,7 @@ Browser will block load if the bundle hash drifts.
 
 ## The redirect destination
 
-The Maytes-hosted checkout the button navigates to is a separate, backend-owned application — not part of this repo. It's bootstrapped purely from the `?id=<uuid>` URL param (no `postMessage` handshake), and at terminal status redirects the shopper to the merchant's `return_url` / `cancel_url` as described in [What happens on click](#3-what-happens-on-click) above.
+The Maytes-hosted checkout the button navigates to is a separate, backend-owned application — not part of this repo. It's bootstrapped purely from the `?id=<uuid>` URL param (no `postMessage` handshake), and at terminal status redirects the shopper to the merchant's `return_url` / `cancel_url` as described in [End-to-end flow](#end-to-end-flow) above.
 
 ## Mobile app deep links
 

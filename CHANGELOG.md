@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.1.2
+
+### Patch Changes
+
+- [#21](https://github.com/kttipay/maytes-checkout-button/pull/21) [`e87a44b`](https://github.com/kttipay/maytes-checkout-button/commit/e87a44b9649686048fa1e622831d601b8eeed71c) Thanks [@kos-maytes](https://github.com/kos-maytes)! - Fix the checkout button's busy-state spinner not reappearing after a customer's first checkout attempt on a given rendered button. The button now tracks its current icon (logo or spinner) by direct reference instead of re-querying the DOM by class name, so the spinner swap works correctly on every checkout attempt, not just the first.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-j3ddA9Lee14QB1lQ0yi6gmQKmHBBJ+F71ymRM4p5RkR8rdjWowpSi8yj4zbxOp8E
+checkout-button.mjs  sha384-iydMiJaeEsp5FSi5m1sqQYa+kIxhD1sf8udIgZdIG6qeGPiWuhHnp4UtE5gZIyWH
+checkout-button.cjs  sha384-RvUAXCKk962r/QXlxPXaw1oGP9CkdBVXlQir9Qw9a74N6x7E+B/nKArL5vdNDis0
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.1.2/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.1.2/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.1.2/checkout-button.cjs)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.5983988c.js](https://js.maytes.co/checkout-button.5983988c.js)
+- [checkout-button.1778c76d.mjs](https://js.maytes.co/checkout-button.1778c76d.mjs)
+- [checkout-button.c97c016d.cjs](https://js.maytes.co/checkout-button.c97c016d.cjs)
+
+<!-- @hash-sri-end -->
 ## 1.1.1
 
 ### Patch Changes
@@ -29,6 +58,7 @@ checkout-button.cjs  sha384-oSekYX0Re0jdMsBU6uzxUedTM+Cnl8uF5y0wmZmjUHngtzr8Sdze
 - [checkout-button.2aad12c3.cjs](https://js.maytes.co/checkout-button.2aad12c3.cjs)
 
 <!-- @hash-sri-end -->
+
 ## 1.1.0
 
 ### Minor Changes

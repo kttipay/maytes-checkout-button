@@ -5,3 +5,4 @@ dist
 .cdn-history-cache
 .env
 .env.*
+coverage

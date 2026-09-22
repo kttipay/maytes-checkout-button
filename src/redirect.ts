@@ -48,6 +48,7 @@ export function buildCheckoutUrl(
 }
 
 export function performRedirect(url: string, replace: boolean): void {
+  /* v8 ignore next 6 -- unreachable under jsdom; window is always defined in this SDK's browser-only distribution */
   if (typeof window === 'undefined') {
     throw new MaytesError(
       MaytesErrorCode.Config,

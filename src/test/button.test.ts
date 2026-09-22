@@ -1,37 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode, SDK_VERSION } from '../index.js';
 import { foundation } from '../foundation/brand.generated.js';
-import { POPUP_LOADING_CSS, resetStylesForTests } from '../styles.js';
+import { POPUP_LOADING_CSS } from '../styles.js';
 import { crossOriginTopWindow, detailOf, sameOriginTopWindow, withScreenWidth, withTop } from './framing-fakes.js';
+import { makeFakePopup } from './fake-popup.js';
+import { installFakeLocation } from './fake-location.js';
+import { resetMaytesDomForTests } from './reset-dom.js';
+import { closePopupWindow, stopPopupPoll } from '../button.js';
+import { createInstanceState } from '../state.js';
 import type { MaytesSDK } from '../types.js';
-
-interface FakePopupLocation {
-  href: string;
-  replace: ReturnType<typeof vi.fn>;
-}
-
-interface FakePopup {
-  closed: boolean;
-  focus: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-  location: FakePopupLocation;
-  document: Document;
-}
-
-function makeFakePopup(): FakePopup {
-  const popupDoc = document.implementation.createHTMLDocument('maytes-popup');
-  const location: FakePopupLocation = {
-    href: 'about:blank',
-    replace: vi.fn((url: string) => { location.href = url; }),
-  };
-  return {
-    closed: false,
-    focus: vi.fn(),
-    close: vi.fn(function (this: FakePopup) { this.closed = true; }),
-    location,
-    document: popupDoc,
-  };
-}
 
 function makeInstance(
   createCheckout = async () => ({ checkoutId: 'x' }),
@@ -43,26 +20,16 @@ function makeInstance(
 describe('maytes.renderButton', () => {
   let openSpy: ReturnType<typeof vi.fn>;
   let assignSpy: ReturnType<typeof vi.fn>;
+  let restoreLocation: () => void;
   let originalOpen: typeof window.open;
-  let originalLocation: Location;
   let container: HTMLElement;
 
   beforeEach(() => {
-    resetStylesForTests();
-    document.querySelectorAll('[data-maytes-overlay]').forEach((el) => el.remove());
+    resetMaytesDomForTests();
 
-    originalLocation = window.location;
-    assignSpy = vi.fn();
-    let currentHref = 'http://localhost/';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...originalLocation,
-        get href() { return currentHref; },
-        set href(v: string) { currentHref = v; assignSpy(v); },
-        replace: (v: string) => { currentHref = v; },
-      },
-    });
+    const fakeLocation = installFakeLocation();
+    assignSpy = fakeLocation.assignSpy;
+    restoreLocation = fakeLocation.restore;
 
     originalOpen = window.open;
     openSpy = vi.fn((_url?: string | URL, _name?: string, _features?: string) => makeFakePopup() as unknown as Window);
@@ -76,7 +43,7 @@ describe('maytes.renderButton', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    restoreLocation();
     window.open = originalOpen;
     container.remove();
     document.querySelectorAll('[data-maytes-overlay]').forEach((el) => el.remove());
@@ -264,6 +231,67 @@ describe('maytes.renderButton', () => {
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
     }
+  });
+
+  it('popup mode at innerWidth=600 (boundary) still behaves as same-window redirect (mobile)', async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 600 });
+    try {
+      Maytes({ createCheckout: async () => ({ checkoutId: 'boundary-mobile' }), environment: 'sandbox' })
+        .renderButton(container, { mode: 'popup' });
+      container.querySelector('button')!.click();
+      await vi.waitFor(() => expect(assignSpy).toHaveBeenCalled());
+      expect(assignSpy).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=boundary-mobile');
+      expect(openSpy).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
+    }
+  });
+
+  it('popup mode at innerWidth=601 (just above the boundary) opens a popup (desktop)', async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 601 });
+    try {
+      const popup = makeFakePopup();
+      openSpy.mockReturnValueOnce(popup as unknown as Window);
+      Maytes({ createCheckout: async () => ({ checkoutId: 'boundary-desktop' }), environment: 'sandbox' })
+        .renderButton(container, { mode: 'popup' });
+      container.querySelector('button')!.click();
+      expect(openSpy).toHaveBeenCalledOnce();
+      await vi.waitFor(() => expect(popup.location.replace).toHaveBeenCalled());
+      expect(popup.location.replace).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=boundary-desktop');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
+    }
+  });
+
+  it('centers the popup using default dimensions when window.screen is unavailable', async () => {
+    const popup = makeFakePopup();
+    openSpy.mockReturnValueOnce(popup as unknown as Window);
+    const originalScreen = window.screen;
+    Object.defineProperty(window, 'screen', { configurable: true, value: undefined });
+    try {
+      Maytes({ createCheckout: async () => ({ checkoutId: 'no-screen' }), environment: 'sandbox' })
+        .renderButton(container, { mode: 'popup' });
+      container.querySelector('button')!.click();
+      expect(openSpy).toHaveBeenCalledOnce();
+      const features = openSpy.mock.calls[0]?.[2] as string;
+      expect(features).toContain('width=500,height=800,left=0,top=0');
+    } finally {
+      Object.defineProperty(window, 'screen', { configurable: true, value: originalScreen });
+    }
+  });
+
+  it('proceeds normally when popup.focus() throws a SecurityError (cross-origin refocus denied)', async () => {
+    const popup = makeFakePopup();
+    popup.focus.mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
+    openSpy.mockReturnValueOnce(popup as unknown as Window);
+    Maytes({ createCheckout: async () => ({ checkoutId: 'refocus-blocked' }), environment: 'sandbox' })
+      .renderButton(container, { mode: 'popup' });
+    container.querySelector('button')!.click();
+    expect(popup.focus).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(popup.location.replace).toHaveBeenCalled());
+    expect(popup.location.replace).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=refocus-blocked');
   });
 
   it('popup mode closes the orphan popup when createCheckout rejects', async () => {
@@ -775,6 +803,30 @@ describe('maytes.renderButton', () => {
     expect(createCheckout).toHaveBeenCalledTimes(2);
   });
 
+  it('shows the spinner again on a SECOND busy cycle, not just the first', async () => {
+    let attempt = 0;
+    const createCheckout = vi.fn(async () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error('first fails');
+      return { checkoutId: 'second' };
+    });
+    Maytes({ createCheckout, environment: 'sandbox' }).renderButton(container, { mode: 'redirect' });
+    const button = container.querySelector('button')!;
+
+    button.click();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__logo')).toBeNull();
+    await vi.waitFor(() => expect(button.hasAttribute('aria-disabled')).toBe(false));
+    expect(button.querySelector('.maytes-checkout-button__logo')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).toBeNull();
+
+    button.click();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__logo')).toBeNull();
+    await vi.waitFor(() => expect(assignSpy).toHaveBeenCalled());
+    expect(assignSpy).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=second');
+  });
+
   it('destroy() tears down popup poll + overlay + removes buttons', () => {
     const popup = makeFakePopup();
     openSpy.mockReturnValueOnce(popup as unknown as Window);
@@ -955,5 +1007,66 @@ describe('maytes.renderButton', () => {
     consoleError.mockRestore();
     document.removeEventListener('maytes:checkout-redirected', redirected);
     document.removeEventListener('maytes:checkout-failed', failed);
+  });
+});
+
+describe('closePopupWindow (direct)', () => {
+  it('is a no-op when passed null', () => {
+    expect(() => closePopupWindow(null)).not.toThrow();
+  });
+
+  it('closes an open popup', () => {
+    const popup = makeFakePopup();
+    closePopupWindow(popup as unknown as Window);
+    expect(popup.close).toHaveBeenCalledOnce();
+  });
+
+  it('does not call .close() again on an already-closed popup', () => {
+    const popup = makeFakePopup();
+    popup.closed = true;
+    closePopupWindow(popup as unknown as Window);
+    expect(popup.close).not.toHaveBeenCalled();
+  });
+
+  it('swallows a SecurityError thrown while reading .closed or calling .close()', () => {
+    const throwing = {
+      get closed(): boolean { throw new DOMException('blocked', 'SecurityError'); },
+      close: vi.fn(),
+    } as unknown as Window;
+    expect(() => closePopupWindow(throwing)).not.toThrow();
+  });
+
+  it('rethrows a non-SecurityError thrown while reading .closed or calling .close()', () => {
+    const throwing = {
+      get closed(): boolean { throw new Error('boom'); },
+      close: vi.fn(),
+    } as unknown as Window;
+    expect(() => closePopupWindow(throwing)).toThrow('boom');
+
+    const throwingDom = {
+      get closed(): boolean { throw new DOMException('blocked', 'NotAllowedError'); },
+      close: vi.fn(),
+    } as unknown as Window;
+    expect(() => closePopupWindow(throwingDom)).toThrow(DOMException);
+  });
+});
+
+describe('stopPopupPoll (direct)', () => {
+  it('clears the interval and nulls the handle', () => {
+    vi.useFakeTimers();
+    try {
+      const state = createInstanceState({ createCheckout: async () => ({ checkoutId: 'x' }), environment: 'sandbox' }, undefined);
+      state.popupPollHandle = setInterval(() => {}, 500);
+      stopPopupPoll(state);
+      expect(state.popupPollHandle).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('is a no-op when the handle is already null', () => {
+    const state = createInstanceState({ createCheckout: async () => ({ checkoutId: 'x' }), environment: 'sandbox' }, undefined);
+    expect(() => stopPopupPoll(state)).not.toThrow();
+    expect(state.popupPollHandle).toBeNull();
   });
 });

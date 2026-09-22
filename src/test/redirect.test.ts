@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode } from '../index.js';
 import { withTop, crossOriginTopWindow } from './framing-fakes.js';
+import { installFakeLocation } from './fake-location.js';
+import { isHttpUrl } from '../redirect.js';
 
 describe('maytes.checkoutUrl', () => {
   it('builds the URL with the sandbox base', () => {
@@ -60,26 +62,17 @@ describe('maytes.checkoutUrl', () => {
 describe('maytes.redirectToCheckout', () => {
   let assignSpy: ReturnType<typeof vi.fn>;
   let replaceSpy: ReturnType<typeof vi.fn>;
-  let originalLocation: Location;
+  let restoreLocation: () => void;
 
   beforeEach(() => {
-    originalLocation = window.location;
-    assignSpy = vi.fn();
-    replaceSpy = vi.fn();
-    let currentHref = 'http://localhost/';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...originalLocation,
-        get href() { return currentHref; },
-        set href(v: string) { currentHref = v; assignSpy(v); },
-        replace: (v: string) => { currentHref = v; replaceSpy(v); },
-      },
-    });
+    const fakeLocation = installFakeLocation();
+    assignSpy = fakeLocation.assignSpy;
+    replaceSpy = fakeLocation.replaceSpy;
+    restoreLocation = fakeLocation.restore;
   });
 
   afterEach(() => {
-    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    restoreLocation();
   });
 
   it('sets location.href by default', () => {
@@ -134,5 +127,25 @@ describe('maytes.redirectToCheckout', () => {
       window.open = originalOpen;
     }
     expect(assignSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('isHttpUrl', () => {
+  it.each([
+    ['https://example.com', true],
+    ['http://example.com', true],
+    ['https://example.com/checkout?id=abc', true],
+  ])('%s -> %s', (value, expected) => {
+    expect(isHttpUrl(value)).toBe(expected);
+  });
+
+  it.each([
+    ['javascript:alert(1)', false],
+    ['data:text/html,<script>alert(1)</script>', false],
+    ['not a url', false],
+    ['', false],
+    ['ftp://example.com', false],
+  ])('%s -> %s', (value, expected) => {
+    expect(isHttpUrl(value)).toBe(expected);
   });
 });

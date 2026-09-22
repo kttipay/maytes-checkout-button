@@ -182,21 +182,24 @@ export function renderButton(
   button.setAttribute('aria-label', `${label} Maytes`);
 
   const labelNode = document.createTextNode(`${label} `);
-  const logo = buildLogo();
+  let icon: SVGSVGElement | HTMLSpanElement = buildLogo();
   button.appendChild(labelNode);
-  button.appendChild(logo);
+  button.appendChild(icon);
 
   const setBusy = (busy: boolean) => {
     state.busy = busy;
     if (busy) {
       button.setAttribute('aria-disabled', 'true');
       button.setAttribute('aria-busy', 'true');
-      logo.replaceWith(buildSpinner());
+      const spinner = buildSpinner();
+      icon.replaceWith(spinner);
+      icon = spinner;
     } else {
       button.removeAttribute('aria-disabled');
       button.removeAttribute('aria-busy');
-      const currentIndicator = button.querySelector('.maytes-checkout-button__spinner, .maytes-checkout-button__logo');
-      if (currentIndicator !== null) currentIndicator.replaceWith(buildLogo());
+      const nextLogo = buildLogo();
+      icon.replaceWith(nextLogo);
+      icon = nextLogo;
     }
   };
 

@@ -133,4 +133,31 @@ describe('overlay attachment', () => {
       }
     }
   });
+
+  it('showOverlay is idempotent — calling it twice while shown does not create a second dialog', () => {
+    showOverlay(state);
+    showOverlay(state);
+    expect(document.querySelectorAll('[data-maytes-overlay]').length).toBe(1);
+  });
+
+  it('falls back to inline open + backdrop when dialog.showModal is unavailable', () => {
+    showOverlay(state);
+    const dialog = document.querySelector('[data-maytes-overlay]') as HTMLDialogElement;
+    expect(typeof dialog.showModal).not.toBe('function');
+    expect(dialog.hasAttribute('open')).toBe(true);
+    expect(dialog.style.background).toBe('rgba(0, 0, 0, 0.6)');
+  });
+
+  it('falls back to inline open + backdrop when dialog.showModal throws', () => {
+    const proto = HTMLDialogElement.prototype as unknown as { showModal?: () => void };
+    proto.showModal = () => { throw new DOMException('not supported here', 'InvalidStateError'); };
+    try {
+      showOverlay(state);
+      const dialog = document.querySelector('[data-maytes-overlay]') as HTMLDialogElement;
+      expect(dialog.hasAttribute('open')).toBe(true);
+      expect(dialog.style.background).toBe('rgba(0, 0, 0, 0.6)');
+    } finally {
+      delete proto.showModal;
+    }
+  });
 });

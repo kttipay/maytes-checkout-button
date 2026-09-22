@@ -30,13 +30,14 @@ describe('styles ref-counting (direct, no button/DOM involved)', () => {
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('clamps the ref-count at zero — an extra release does not go negative or throw', () => {
+  it('clamps the ref-count at zero — an extra release does not create a phantom negative balance', () => {
     ensureStylesInjected(undefined);
     releaseStyles();
-    expect(() => releaseStyles()).not.toThrow();
-    expect(document.head.querySelector(SELECTOR)).toBeNull();
+    releaseStyles();
     ensureStylesInjected(undefined);
-    expect(document.head.querySelectorAll(SELECTOR).length).toBe(1);
+    ensureStylesInjected(undefined);
+    releaseStyles();
+    expect(document.head.querySelector(SELECTOR)).not.toBeNull();
   });
 
   it('resetStylesForTests() fully resets ref-count and removes any injected tag', () => {

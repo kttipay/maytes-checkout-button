@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode } from '../index.js';
 import { withTop, crossOriginTopWindow } from './framing-fakes.js';
 import { installFakeLocation } from './fake-location.js';
+import { isHttpUrl } from '../redirect.js';
 
 describe('maytes.checkoutUrl', () => {
   it('builds the URL with the sandbox base', () => {
@@ -126,5 +127,25 @@ describe('maytes.redirectToCheckout', () => {
       window.open = originalOpen;
     }
     expect(assignSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('isHttpUrl', () => {
+  it.each([
+    ['https://example.com', true],
+    ['http://example.com', true],
+    ['https://example.com/checkout?id=abc', true],
+  ])('%s -> %s', (value, expected) => {
+    expect(isHttpUrl(value)).toBe(expected);
+  });
+
+  it.each([
+    ['javascript:alert(1)', false],
+    ['data:text/html,<script>alert(1)</script>', false],
+    ['not a url', false],
+    ['', false],
+    ['ftp://example.com', false],
+  ])('%s -> %s', (value, expected) => {
+    expect(isHttpUrl(value)).toBe(expected);
   });
 });

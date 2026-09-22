@@ -1,37 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode, SDK_VERSION } from '../index.js';
 import { foundation } from '../foundation/brand.generated.js';
-import { POPUP_LOADING_CSS, resetStylesForTests } from '../styles.js';
+import { POPUP_LOADING_CSS } from '../styles.js';
 import { crossOriginTopWindow, detailOf, sameOriginTopWindow, withScreenWidth, withTop } from './framing-fakes.js';
+import { makeFakePopup } from './fake-popup.js';
+import { installFakeLocation } from './fake-location.js';
+import { resetMaytesDomForTests } from './reset-dom.js';
 import type { MaytesSDK } from '../types.js';
-
-interface FakePopupLocation {
-  href: string;
-  replace: ReturnType<typeof vi.fn>;
-}
-
-interface FakePopup {
-  closed: boolean;
-  focus: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-  location: FakePopupLocation;
-  document: Document;
-}
-
-function makeFakePopup(): FakePopup {
-  const popupDoc = document.implementation.createHTMLDocument('maytes-popup');
-  const location: FakePopupLocation = {
-    href: 'about:blank',
-    replace: vi.fn((url: string) => { location.href = url; }),
-  };
-  return {
-    closed: false,
-    focus: vi.fn(),
-    close: vi.fn(function (this: FakePopup) { this.closed = true; }),
-    location,
-    document: popupDoc,
-  };
-}
 
 function makeInstance(
   createCheckout = async () => ({ checkoutId: 'x' }),
@@ -43,26 +18,16 @@ function makeInstance(
 describe('maytes.renderButton', () => {
   let openSpy: ReturnType<typeof vi.fn>;
   let assignSpy: ReturnType<typeof vi.fn>;
+  let restoreLocation: () => void;
   let originalOpen: typeof window.open;
-  let originalLocation: Location;
   let container: HTMLElement;
 
   beforeEach(() => {
-    resetStylesForTests();
-    document.querySelectorAll('[data-maytes-overlay]').forEach((el) => el.remove());
+    resetMaytesDomForTests();
 
-    originalLocation = window.location;
-    assignSpy = vi.fn();
-    let currentHref = 'http://localhost/';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...originalLocation,
-        get href() { return currentHref; },
-        set href(v: string) { currentHref = v; assignSpy(v); },
-        replace: (v: string) => { currentHref = v; },
-      },
-    });
+    const fakeLocation = installFakeLocation();
+    assignSpy = fakeLocation.assignSpy;
+    restoreLocation = fakeLocation.restore;
 
     originalOpen = window.open;
     openSpy = vi.fn((_url?: string | URL, _name?: string, _features?: string) => makeFakePopup() as unknown as Window);
@@ -76,7 +41,7 @@ describe('maytes.renderButton', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    restoreLocation();
     window.open = originalOpen;
     container.remove();
     document.querySelectorAll('[data-maytes-overlay]').forEach((el) => el.remove());

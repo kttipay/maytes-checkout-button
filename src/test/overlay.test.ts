@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { hideOverlay, showOverlay } from '../overlay.js';
 import { createInstanceState, type InstanceState } from '../state.js';
-import { ensureStylesInjected, resetStylesForTests } from '../styles.js';
+import { ensureStylesInjected } from '../styles.js';
+import { resetMaytesDomForTests } from './reset-dom.js';
 
 function makeState(): InstanceState {
   return createInstanceState(
@@ -14,9 +15,7 @@ describe('overlay attachment', () => {
   let state: InstanceState;
 
   beforeEach(() => {
-    resetStylesForTests();
-    document.head.querySelectorAll('style[data-maytes-checkout-button-overlay-styles]').forEach((el) => el.remove());
-    document.querySelectorAll('[data-maytes-overlay]').forEach((el) => el.remove());
+    resetMaytesDomForTests();
     state = makeState();
     ensureStylesInjected(undefined);
   });

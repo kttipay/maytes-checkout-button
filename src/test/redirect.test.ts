@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode } from '../index.js';
 import { withTop, crossOriginTopWindow } from './framing-fakes.js';
+import { installFakeLocation } from './fake-location.js';
 
 describe('maytes.checkoutUrl', () => {
   it('builds the URL with the sandbox base', () => {
@@ -60,26 +61,17 @@ describe('maytes.checkoutUrl', () => {
 describe('maytes.redirectToCheckout', () => {
   let assignSpy: ReturnType<typeof vi.fn>;
   let replaceSpy: ReturnType<typeof vi.fn>;
-  let originalLocation: Location;
+  let restoreLocation: () => void;
 
   beforeEach(() => {
-    originalLocation = window.location;
-    assignSpy = vi.fn();
-    replaceSpy = vi.fn();
-    let currentHref = 'http://localhost/';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...originalLocation,
-        get href() { return currentHref; },
-        set href(v: string) { currentHref = v; assignSpy(v); },
-        replace: (v: string) => { currentHref = v; replaceSpy(v); },
-      },
-    });
+    const fakeLocation = installFakeLocation();
+    assignSpy = fakeLocation.assignSpy;
+    replaceSpy = fakeLocation.replaceSpy;
+    restoreLocation = fakeLocation.restore;
   });
 
   afterEach(() => {
-    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    restoreLocation();
   });
 
   it('sets location.href by default', () => {

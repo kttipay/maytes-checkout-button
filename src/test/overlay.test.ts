@@ -150,12 +150,31 @@ describe('overlay attachment', () => {
 
   it('falls back to inline open + backdrop when dialog.showModal throws', () => {
     const proto = HTMLDialogElement.prototype as unknown as { showModal?: () => void };
-    proto.showModal = () => { throw new DOMException('not supported here', 'InvalidStateError'); };
+    const showModal = vi.fn(() => { throw new DOMException('not supported here', 'InvalidStateError'); });
+    proto.showModal = showModal;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       showOverlay(state);
       const dialog = document.querySelector('[data-maytes-overlay]') as HTMLDialogElement;
+      expect(showModal).toHaveBeenCalledOnce();
+      expect(warnSpy).toHaveBeenCalledOnce();
       expect(dialog.hasAttribute('open')).toBe(true);
       expect(dialog.style.background).toBe('rgba(0, 0, 0, 0.6)');
+    } finally {
+      warnSpy.mockRestore();
+      delete proto.showModal;
+    }
+  });
+
+  it('uses the native modal and skips the inline backdrop when dialog.showModal succeeds', () => {
+    const proto = HTMLDialogElement.prototype as unknown as { showModal?: () => void };
+    const showModal = vi.fn();
+    proto.showModal = showModal;
+    try {
+      showOverlay(state);
+      const dialog = document.querySelector('[data-maytes-overlay]') as HTMLDialogElement;
+      expect(showModal).toHaveBeenCalledOnce();
+      expect(dialog.style.background).toBe('');
     } finally {
       delete proto.showModal;
     }
@@ -181,6 +200,15 @@ describe('overlay attachment', () => {
     state.popupWindow = closedPopup;
     link.click();
     expect((closedPopup as unknown as { focus: ReturnType<typeof vi.fn> }).focus).not.toHaveBeenCalled();
+  });
+
+  it('"Return to Maytes" link swallows a SecurityError from popup.focus()', () => {
+    showOverlay(state);
+    const focus = vi.fn(() => { throw new DOMException('blocked', 'SecurityError'); });
+    state.popupWindow = { closed: false, focus } as unknown as Window;
+    const link = document.querySelector('.maytes-checkout-overlay__link') as HTMLButtonElement;
+    expect(() => link.click()).not.toThrow();
+    expect(focus).toHaveBeenCalledOnce();
   });
 
   it('does not clone the button-style tag again if the top document already carries the marker', () => {

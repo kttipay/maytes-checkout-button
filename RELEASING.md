@@ -1,7 +1,7 @@
 # checkout-button SDK — Release Pipeline & CI/CD
 
-> Status: **publishing armed**. A `major` changeset is queued, so the next merge of the
-> auto-created "Version Packages" PR cuts `1.0.0` and publishes to npm with provenance.
+> Status: **live**. Every release publishes from this repo to npm (with provenance), GitHub
+> Releases and `js.maytes.co`; [`CHANGELOG.md`](CHANGELOG.md) lists what has shipped.
 
 ## This repo is the source
 

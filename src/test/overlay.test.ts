@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { hideOverlay, showOverlay } from '../overlay.js';
 import { createInstanceState, type InstanceState } from '../state.js';
 import { ensureStylesInjected } from '../styles.js';
@@ -158,6 +158,75 @@ describe('overlay attachment', () => {
       expect(dialog.style.background).toBe('rgba(0, 0, 0, 0.6)');
     } finally {
       delete proto.showModal;
+    }
+  });
+
+  it('"Return to Maytes" link refocuses the popup when it is open and not closed', () => {
+    showOverlay(state);
+    const fakePopup = { closed: false, focus: vi.fn() } as unknown as Window;
+    state.popupWindow = fakePopup;
+    const link = document.querySelector('.maytes-checkout-overlay__link') as HTMLButtonElement;
+    link.click();
+    expect((fakePopup as unknown as { focus: ReturnType<typeof vi.fn> }).focus).toHaveBeenCalledOnce();
+  });
+
+  it('"Return to Maytes" link is a no-op when there is no open popup', () => {
+    showOverlay(state);
+    const link = document.querySelector('.maytes-checkout-overlay__link') as HTMLButtonElement;
+
+    state.popupWindow = null;
+    expect(() => link.click()).not.toThrow();
+
+    const closedPopup = { closed: true, focus: vi.fn() } as unknown as Window;
+    state.popupWindow = closedPopup;
+    link.click();
+    expect((closedPopup as unknown as { focus: ReturnType<typeof vi.fn> }).focus).not.toHaveBeenCalled();
+  });
+
+  it('does not clone the button-style tag again if the top document already carries the marker', () => {
+    const parentDoc = document.implementation.createHTMLDocument('parent');
+    const existingMarker = parentDoc.createElement('style');
+    existingMarker.setAttribute('data-maytes-checkout-button-overlay-styles', '');
+    existingMarker.textContent = '/* pre-existing */';
+    parentDoc.head.appendChild(existingMarker);
+
+    const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
+    Object.defineProperty(window, 'top', {
+      configurable: true,
+      get: () => ({ document: parentDoc } as unknown as Window),
+    });
+    try {
+      showOverlay(state);
+      const clones = parentDoc.head.querySelectorAll('style[data-maytes-checkout-button-overlay-styles]');
+      expect(clones.length).toBe(1);
+      expect(clones[0]?.textContent).toBe('/* pre-existing */');
+    } finally {
+      if (originalTop !== undefined) {
+        Object.defineProperty(window, 'top', originalTop);
+      } else {
+        Object.defineProperty(window, 'top', { configurable: true, get: () => window });
+      }
+    }
+  });
+
+  it('hideOverlay removes the cloned cross-frame style tag', () => {
+    const parentDoc = document.implementation.createHTMLDocument('parent');
+    const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
+    Object.defineProperty(window, 'top', {
+      configurable: true,
+      get: () => ({ document: parentDoc } as unknown as Window),
+    });
+    try {
+      showOverlay(state);
+      expect(parentDoc.head.querySelector('style[data-maytes-checkout-button-overlay-styles]')).not.toBeNull();
+      hideOverlay(state);
+      expect(parentDoc.head.querySelector('style[data-maytes-checkout-button-overlay-styles]')).toBeNull();
+    } finally {
+      if (originalTop !== undefined) {
+        Object.defineProperty(window, 'top', originalTop);
+      } else {
+        Object.defineProperty(window, 'top', { configurable: true, get: () => window });
+      }
     }
   });
 });

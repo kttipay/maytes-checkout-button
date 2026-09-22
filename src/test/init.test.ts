@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Maytes, MaytesError, MaytesErrorCode } from '../index.js';
+import type { MaytesOptions } from '../index.js';
 
 describe('Maytes() factory', () => {
   it('returns an SDK instance when given valid options', () => {
@@ -84,5 +85,12 @@ describe('Maytes() factory', () => {
     expect(a).not.toBe(b);
     expect(a.checkoutUrl({ checkoutId: 'x' })).toContain('sandbox-checkout');
     expect(b.checkoutUrl({ checkoutId: 'x' })).toBe('https://checkout.maytes.co/?id=x');
+  });
+
+  it('throws CONFIG when options itself is not an object (null, undefined, or a primitive)', () => {
+    expect(() => Maytes(null as unknown as MaytesOptions)).toThrow(MaytesError);
+    expect(() => Maytes(undefined as unknown as MaytesOptions)).toThrow(MaytesError);
+    expect(() => Maytes('nope' as unknown as MaytesOptions)).toThrow(MaytesError);
+    expect(() => Maytes(42 as unknown as MaytesOptions)).toThrow(MaytesError);
   });
 });

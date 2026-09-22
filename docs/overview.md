@@ -212,16 +212,19 @@ npm run test:run      # single-shot, used by CI
 npm run typecheck     # tsc --noEmit
 ```
 
-Coverage — **203 tests across 15 files** (`src/test/`):
+Coverage — **249 tests across 18 files** (`src/test/`):
 
 | File | Tests | What it covers |
 |---|---|---|
-| `init.test.ts` | 9 | factory validation (`createCheckout` type, `environment` enum), internal `baseUrl` passthrough |
-| `button.test.ts` | 62 | render → click → closure → default popup launch (`about:blank` sync open, branded loader, `location.replace` navigation), explicit redirect mode, phone redirect fallback, blocked-popup redirect event, unique per-instance window name, busy gating, double-click suppression, destroy-mid-flight guard, listener detach on destroy, versioned style marker, immediate overlay clear on Escape, rejection / invalid-shape recovery, env → URL mapping, `baseUrl` override, popup-closed polling + overlay teardown, `maytes:checkout-*` events, cleanup/`destroy` idempotency, style refcounting, `cspNonce` presence/absence, `label` / `block` / `mode` props, multi-button concurrency, framed navigation (same-origin top window on a phone, popup sizing from the top window, cross-origin top window allowing navigation, a refused top navigation opening a new tab, both refused failing loudly and re-enabling the button) |
+| `init.test.ts` | 10 | factory validation (`createCheckout` type, `environment` enum), internal `baseUrl` passthrough |
+| `button.test.ts` | 74 | render → click → closure → default popup launch (`about:blank` sync open, branded loader, `location.replace` navigation), explicit redirect mode, phone redirect fallback, blocked-popup redirect event, unique per-instance window name, busy gating, double-click suppression, destroy-mid-flight guard, listener detach on destroy, versioned style marker, immediate overlay clear on Escape, rejection / invalid-shape recovery, env → URL mapping, `baseUrl` override, popup-closed polling + overlay teardown, `maytes:checkout-*` events, cleanup/`destroy` idempotency, style refcounting, `cspNonce` presence/absence, `label` / `block` / `mode` props, multi-button concurrency, framed navigation (same-origin top window on a phone, popup sizing from the top window, cross-origin top window allowing navigation, a refused top navigation opening a new tab, both refused failing loudly and re-enabling the button), repeated button clicks without icon swap |
 | `framing.test.ts` | 10 | `isFramed` / `sameOriginTop` / `viewportWidth` at top level and when framed, falling back to the screen width when the top window is cross-origin (and to the local width when the screen width is unknown), `navigateTopLevel` targeting the top window, opening a tab with `opener` severed when the top window refuses, reporting the refusal when both are blocked, rethrowing failures that aren't a `SecurityError`, recognising a `SecurityError` thrown from another realm as a top-window refusal or as a cross-origin top window |
 | `env.test.ts` | 24 | `isValidEnvironment` (positive, negative and non-string values via `it.each`, type-guard narrowing), `resolveBaseUrl` (sandbox / staging / production mapping, override precedence, empty-string override, defence-in-depth throw on unknown env) |
-| `redirect.test.ts` | 12 | URL construction, trailing-slash strip, URL encoding, empty / whitespace `checkoutId`, `replace` vs `href` navigation, and framed navigation: a same-origin top window honouring `replace`, throwing `MaytesError` when a cross-origin top window and a new tab are both refused |
-| `overlay.test.ts` | 4 | `hideOverlay` no-op when nothing was shown, mounting into the local document at top level, mounting into a same-origin top document when framed (with its style tag cloned along), falling back to the local document when the top window throws `SecurityError` |
+| `state.test.ts` | 7 | popup-name generation (`crypto.randomUUID` + fallback), `createInstanceState` config passthrough and defaults |
+| `redirect.test.ts` | 20 | URL construction, trailing-slash strip, URL encoding, empty / whitespace `checkoutId`, `replace` vs `href` navigation, and framed navigation: a same-origin top window honouring `replace`, throwing `MaytesError` when a cross-origin top window and a new tab are both refused |
+| `overlay.test.ts` | 13 | `hideOverlay` no-op when nothing was shown, mounting into the local document at top level, mounting into a same-origin top document when framed (with its style tag cloned along), falling back to the local document when the top window throws `SecurityError` |
+| `styles.test.ts` | 5 | direct `ensureStylesInjected`/`releaseStyles` ref-counting (no button/DOM involved) |
+| `branding.test.ts` | 4 | `buildMaytesLogo` SVG contract (viewBox, sizing, path structure) |
 | `errors.test.ts` | 8 | `MaytesError` is an `Error`, code/message/name/stack present, `toString` serialization, `MaytesErrorCode.Config === 'CONFIG'`, code surface is `{ Config }` only |
 | `changelog.test.ts` | 14 | unit-tests the release-script changelog slicer (`scripts/lib/changelog.mjs`), not SDK behaviour: section-bounds lookup, section extraction, SRI block injection (including the never-invent-a-section guard and idempotent re-runs), SRI record extraction across every released version |
 | `cdn-config.test.ts` | 8 | unit-tests `scripts/lib/cdn-config.mjs`: SemVer and `/v{major}` path building, hashed URL building, leading-slash normalization, a pinned SemVer redirect for every tracked release, one evergreen redirect per major, and a fixed header set |
@@ -231,6 +234,8 @@ Coverage — **203 tests across 15 files** (`src/test/`):
 | `semver-lite.test.ts` | 6 | unit-tests `compareVersions` (numeric major/minor/patch ordering) and `latestPerMajor` (highest version per major, order-independent) |
 | `readme.test.ts` | 5 | unit-tests `scripts/lib/readme.mjs`'s CDN-example injector: no-op when the markers are absent, replaces both example URLs, leaves the surrounding prose untouched, idempotent re-run, keeps the SRI placeholder as a literal ellipsis |
 | `foundation.test.ts` | 2 | vendored brand tokens (`src/foundation/brand.generated.ts`) match `foundation.lock.json`'s tag, every role the button uses is an opaque hex colour |
+
+Run `npm run test:coverage` for a coverage report (thresholds: 90% lines/statements/functions, 85% branches — enforced in both `pr.yml` and `release.yml`).
 
 ### End-to-end testing
 

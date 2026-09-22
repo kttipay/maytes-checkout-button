@@ -775,6 +775,30 @@ describe('maytes.renderButton', () => {
     expect(createCheckout).toHaveBeenCalledTimes(2);
   });
 
+  it('shows the spinner again on a SECOND busy cycle, not just the first', async () => {
+    let attempt = 0;
+    const createCheckout = vi.fn(async () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error('first fails');
+      return { checkoutId: 'second' };
+    });
+    Maytes({ createCheckout, environment: 'sandbox' }).renderButton(container, { mode: 'redirect' });
+    const button = container.querySelector('button')!;
+
+    button.click();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__logo')).toBeNull();
+    await vi.waitFor(() => expect(button.hasAttribute('aria-disabled')).toBe(false));
+    expect(button.querySelector('.maytes-checkout-button__logo')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).toBeNull();
+
+    button.click();
+    expect(button.querySelector('.maytes-checkout-button__spinner')).not.toBeNull();
+    expect(button.querySelector('.maytes-checkout-button__logo')).toBeNull();
+    await vi.waitFor(() => expect(assignSpy).toHaveBeenCalled());
+    expect(assignSpy).toHaveBeenCalledWith('https://sandbox-checkout.maytes.co/?id=second');
+  });
+
   it('destroy() tears down popup poll + overlay + removes buttons', () => {
     const popup = makeFakePopup();
     openSpy.mockReturnValueOnce(popup as unknown as Window);

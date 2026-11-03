@@ -144,6 +144,11 @@ const BUTTON_CSS = `
   transition: color 0.15s;
 }
 .maytes-checkout-overlay__link.maytes-checkout-overlay__link:hover { color: ${foundation.text.primaryInverse}; }
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:focus:not(:focus-visible) { outline: none; }
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:focus-visible {
+  outline: 2px solid ${FOCUS_RING};
+  outline-offset: 2px;
+}
 @media (prefers-reduced-motion: reduce) {
   .maytes-checkout-overlay__spinner,
   .maytes-checkout-button__spinner { animation: none; }

@@ -293,4 +293,24 @@ describe('overlay link keeps its look under host theme button styles', () => {
     host.remove();
     resetMaytesDomForTests();
   });
+  it('keeps a Maytes focus ring on the link for keyboard users when the theme swaps outlines for a shadow', () => {
+    resetMaytesDomForTests();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    Maytes({ createCheckout: async () => ({ checkoutId: 'x' }), environment: 'sandbox' }).renderButton(host);
+    const shadowFocusTheme = 'button:focus { outline: none; box-shadow: 0 0 0 3px #7f54b3; }';
+    const rules = [...parseRules(injectedSdkCss()), ...parseRules(shadowFocusTheme)];
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'maytes-checkout-overlay__link';
+    document.body.appendChild(link);
+    const outline = ['outline', 'outline-style', 'outline-color'];
+    setStates(link, ['focus', 'focus-visible']);
+    expect(cascade(link, rules, outline)).toBe('2px solid #6b8aff');
+    setStates(link, ['focus']);
+    expect(cascade(link, rules, outline)).toBe('none');
+    link.remove();
+    host.remove();
+    resetMaytesDomForTests();
+  });
 });

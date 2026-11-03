@@ -20,26 +20,44 @@ const BUTTON_CSS = `
   gap: 0.57em;
   min-height: var(--maytes-button-height, auto);
   padding: 0.71em 1.29em;
-  border: none;
   border-radius: var(--maytes-button-radius, 999px);
-  background: ${foundation.brand.primary};
-  color: ${foundation.text.primaryInverse};
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: var(--maytes-button-font-size, 14px);
   font-weight: 600;
   line-height: 1;
-  cursor: pointer;
   user-select: none;
+}
+.maytes-checkout-button.maytes-checkout-button,
+.maytes-checkout-button.maytes-checkout-button:hover,
+.maytes-checkout-button.maytes-checkout-button:focus,
+.maytes-checkout-button.maytes-checkout-button:active {
+  background: ${foundation.brand.primary};
+  border: none;
+  color: ${foundation.text.primaryInverse};
+  box-shadow: none;
+  text-decoration: none;
+  text-shadow: none;
+  filter: none;
+  transform: none;
+  opacity: 1;
+  cursor: pointer;
   transition: background-color 120ms ease, opacity 120ms ease;
 }
-.maytes-checkout-button:hover { background: ${foundation.palette.burgundy[700]}; }
-.maytes-checkout-button:focus-visible {
+.maytes-checkout-button.maytes-checkout-button:hover { background: ${foundation.palette.burgundy[700]}; }
+.maytes-checkout-button.maytes-checkout-button:focus:not(:focus-visible) { outline: none; }
+.maytes-checkout-button.maytes-checkout-button:focus-visible {
   outline: 2px solid ${FOCUS_RING};
   outline-offset: 2px;
 }
-.maytes-checkout-button[aria-disabled='true'] {
+.maytes-checkout-button.maytes-checkout-button[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.7;
+}
+.maytes-checkout-button.maytes-checkout-button * { transition: none; }
+.maytes-checkout-button.maytes-checkout-button .maytes-checkout-button__logo,
+.maytes-checkout-button.maytes-checkout-button .maytes-checkout-button__logo * {
+  animation: none;
+  fill: currentColor;
 }
 .maytes-checkout-button--sized {
   box-sizing: border-box;
@@ -106,17 +124,26 @@ const BUTTON_CSS = `
   margin: 0;
 }
 .maytes-checkout-overlay__link {
-  color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
-  text-decoration: underline;
   text-underline-offset: 4px;
+  font-family: inherit;
+}
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link,
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:hover,
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:focus,
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:active {
   background: none;
   border: none;
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+  text-decoration: underline;
+  text-shadow: none;
+  transform: none;
+  opacity: 1;
   cursor: pointer;
-  font-family: inherit;
   transition: color 0.15s;
 }
-.maytes-checkout-overlay__link:hover { color: ${foundation.text.primaryInverse}; }
+.maytes-checkout-overlay__link.maytes-checkout-overlay__link:hover { color: ${foundation.text.primaryInverse}; }
 @media (prefers-reduced-motion: reduce) {
   .maytes-checkout-overlay__spinner,
   .maytes-checkout-button__spinner { animation: none; }

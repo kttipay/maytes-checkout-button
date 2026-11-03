@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.2.1
+
+### Patch Changes
+
+- [#39](https://github.com/kttipay/maytes-checkout-button/pull/39) [`73d1f0c`](https://github.com/kttipay/maytes-checkout-button/commit/73d1f0ccb84ec22473e8a0b1ba17e923c254e2ee) Thanks [@kos-maytes](https://github.com/kos-maytes)! - The Split with Maytes button keeps its white label and logo, burgundy background and Maytes focus ring when hovered, focused or pressed on sites whose theme styles every button (for example WooCommerce's Storefront theme, which turned the label dark grey on hover). Host-page transitions no longer fade the logo, and the overlay's "Return to Maytes" link no longer picks up the theme's button background. A mouse click no longer shows the theme's focus outline on the button or the link; keyboard focus shows the Maytes focus ring on both.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-0n2iIhZMofbJkzlb2mgQmm714yMFWW0079cxvVxCxZKPjjRHTrEBddxLRygUFUA/
+checkout-button.mjs  sha384-DvlD7lErx6rl9lPfEtS9tu9Hp+sb+LC8ZXkzCnfRxP2ruuHuE/toGraDj7Hp9KjU
+checkout-button.cjs  sha384-2h9J+cURwjqOA8QYBgt1LeulM0IgD6w1hCxdLdieKvuhDb1/ejuXT3rLEy5SXsb9
+checkout-button.element.js  sha384-NHwIzALKGM4v3zbs5kbpDmWb52EGQ6+NMh7ARB5UPTCbjwn3orJV1bDnXzgZrwck
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.2.1/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.2.1/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.2.1/checkout-button.cjs)
+- [checkout-button.element.js](https://js.maytes.co/v1.2.1/checkout-button.element.js)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.299a037b.js](https://js.maytes.co/checkout-button.299a037b.js)
+- [checkout-button.67fdb2e1.mjs](https://js.maytes.co/checkout-button.67fdb2e1.mjs)
+- [checkout-button.332d26cc.cjs](https://js.maytes.co/checkout-button.332d26cc.cjs)
+- [checkout-button.element.afe71cd5.js](https://js.maytes.co/checkout-button.element.afe71cd5.js)
+
+<!-- @hash-sri-end -->
 ## 1.2.0
 
 ### Minor Changes
@@ -48,6 +80,7 @@ checkout-button.element.js  sha384-Y3aDrAucY25r7DzSkYJpsjoazd67oBy4WSxbTXBgpaWaT
 - [checkout-button.element.6c530c24.js](https://js.maytes.co/checkout-button.element.6c530c24.js)
 
 <!-- @hash-sri-end -->
+
 ## 1.1.1
 
 ### Patch Changes

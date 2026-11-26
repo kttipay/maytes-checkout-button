@@ -19,7 +19,7 @@ If your policy restricts connections (`connect-src`, or `default-src` without it
 
 ## What the button sends
 
-In production, the first time a button is on screen on a page, the SDK requests an empty file from `js.maytes.co` so that Maytes can count how often buttons are shown on each site. The request carries your site's origin (not the page address) and no cookies or shopper identifiers. As with any request, Cloudflare receives the shopper's IP address and browser details.
+In production, the first time a button is on screen on a page, the SDK requests an empty file from `js.maytes.co` so that Maytes can count how often buttons are shown on each site. The request carries your site's origin (not the page address) and the SDK version, for example `button-shown.txt?v=1.2.2`, and no cookies or shopper identifiers. As with any request, Cloudflare receives the shopper's IP address and browser details.
 
 If your policy blocks the request, the button works as usual, and the browser reports the policy violation.
 

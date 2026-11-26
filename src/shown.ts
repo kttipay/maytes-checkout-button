@@ -1,10 +1,12 @@
 import type { InternalEnvironment } from './env.js';
+import { SDK_VERSION } from './version.js';
 
 export const SHOWN_URL = 'https://js.maytes.co/button-shown.txt';
 export const SHOWN_PATHS_KEY = '__maytes_checkout_button_shown_paths__';
 
 const REPORTING_ENVIRONMENTS: ReadonlySet<InternalEnvironment> = new Set(['production', 'staging']);
 const VISIBLE_RATIO = 0.5;
+const SHOWN_REQUEST_URL = `${SHOWN_URL}?v=${encodeURIComponent(SDK_VERSION)}`;
 
 type ShownWindow = Window & { [SHOWN_PATHS_KEY]?: Set<string> };
 
@@ -17,7 +19,7 @@ function sendOncePerPath(): void {
   if (paths.has(path)) return;
   paths.add(path);
   Promise.resolve(
-    fetch(SHOWN_URL, {
+    fetch(SHOWN_REQUEST_URL, {
       mode: 'no-cors',
       cache: 'no-store',
       credentials: 'omit',

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Maytes } from '../index.js';
 import { SHOWN_PATHS_KEY, SHOWN_URL, watchShown } from '../shown.js';
+import { SDK_VERSION } from '../version.js';
 import { resetMaytesDomForTests } from './reset-dom.js';
 import type { MaytesEnvironment, MaytesSDK } from '../types.js';
 
@@ -107,7 +108,7 @@ describe('button shown report', () => {
     observer.emit(1);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(fetchSpy).toHaveBeenCalledWith('https://js.maytes.co/button-shown.txt', {
+    expect(fetchSpy).toHaveBeenCalledWith(`https://js.maytes.co/button-shown.txt?v=${SDK_VERSION}`, {
       mode: 'no-cors',
       cache: 'no-store',
       credentials: 'omit',
@@ -116,6 +117,18 @@ describe('button shown report', () => {
     });
     expect(SHOWN_URL).toBe('https://js.maytes.co/button-shown.txt');
     expect(observer.disconnected).toBe(true);
+  });
+
+  it('names the running SDK version, and nothing else, in the query', () => {
+    makeInstance().renderButton(makeContainer());
+    observerAt(0).emit(1);
+
+    const url = new URL(String(fetchSpy.mock.calls[0]?.[0]));
+    expect(SDK_VERSION).toMatch(/^\d+\.\d+\.\d+/);
+    expect(url.origin + url.pathname).toBe(SHOWN_URL);
+    expect([...url.searchParams.keys()]).toEqual(['v']);
+    expect(url.searchParams.get('v')).toBe(SDK_VERSION);
+    expect(url.hash).toBe('');
   });
 
   it('sends from the staging environment', () => {

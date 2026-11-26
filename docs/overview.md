@@ -207,7 +207,7 @@ production → https://checkout.maytes.co
 | `mode: 'redirect'`, or blocked popup | Top-level navigation to the hosted checkout; `maytes:checkout-redirected` (`detail.url`, `detail.target`). No `failed` event. |
 | Framed, top window refuses the navigation | New tab with `opener` severed; `maytes:checkout-redirected` (`target: 'tab'`). |
 | Framed, top window and new tab both refused | Button re-enables, `console.error`, `maytes:checkout-failed` (reason `navigation-blocked`, `cause` = the refusal). |
-| At least half of a button is on screen and the page is visible, in `production` or the internal `staging` environment | One `no-cors` GET of `https://js.maytes.co/button-shown.txt` with the origin only as referrer, once per `location.pathname` per window across every copy of the SDK. Never in `sandbox`. Failures are silent and never affect the button. |
+| At least half of a button is on screen and the page is visible, in `production` or the internal `staging` environment | One `no-cors` GET of `https://js.maytes.co/button-shown.txt?v=<SDK_VERSION>` with the origin only as referrer, once per `location.pathname` per window across every copy of the SDK. Never in `sandbox`. Failures are silent and never affect the button. |
 | Cleanup fn or `destroy()` called twice | Idempotent — no-op. |
 | Last button removed | Injected `<style>` tag is removed (refcounted in `styles.ts`). |
 
@@ -286,7 +286,7 @@ Coverage — **264 tests across 19 files** (`src/test/`):
 | `branding.test.ts` | 4 | `buildMaytesLogo` SVG contract (viewBox, sizing, path structure) |
 | `errors.test.ts` | 8 | `MaytesError` is an `Error`, code/message/name/stack present, `toString` serialization, `MaytesErrorCode.Config === 'CONFIG'`, code surface is `{ Config }` only |
 | `changelog.test.ts` | 14 | unit-tests the release-script changelog slicer (`scripts/lib/changelog.mjs`), not SDK behaviour: section-bounds lookup, section extraction, SRI block injection (including the never-invent-a-section guard and idempotent re-runs), SRI record extraction across every released version |
-| `shown.test.ts` | 20 | the button-shown report: the exact request, which environments send, the half-visible and page-visible rules, once per path across SDK copies, teardown, and silence when `IntersectionObserver` or `fetch` is missing or failing |
+| `shown.test.ts` | 24 | the button-shown report: the exact request, which environments send, the half-visible and page-visible rules, once per path across SDK copies, teardown, and silence when `IntersectionObserver` or `fetch` is missing or failing |
 | `cdn-config.test.ts` | 9 | unit-tests `scripts/lib/cdn-config.mjs`: the shown-report file URL matching the SDK's, SemVer and `/v{major}` path building, hashed URL building, leading-slash normalization, a pinned SemVer redirect for every tracked release, one evergreen redirect per major, and a fixed header set |
 | `cdn-cache-rules.test.ts` | 24 | unit-tests `scripts/lib/cdn-cache-rules.mjs`: the three fixed Cloudflare Cache Rules scoped to `js.maytes.co` (immutable pins, evergreen, dev-branch bypass), wildcard disambiguation between pinned SemVer, content-hash and evergreen paths, the unhashed-bundle exclusion, and `rulesetNeedsUpdate` change detection |
 | `cdn-dev-redirect.test.ts` | 8 | unit-tests `scripts/lib/cdn-dev-redirect.mjs`: the `/dev/*` → Pages-preview redirect rule's scope, target expression, and status code, and `redirectNeedsUpdate` change detection |

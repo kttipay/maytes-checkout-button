@@ -1,5 +1,7 @@
 export const CDN_ORIGIN: 'https://js.maytes.co';
 
+export const SHOWN_PING_FILE: 'button-shown.txt';
+
 export function cdnUrl(path: string): string;
 
 export function semverPath(version: string, sourceName: string): string;

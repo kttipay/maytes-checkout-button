@@ -6,7 +6,9 @@ import {
   majorPath,
   semverPath,
   semverUrl,
+  SHOWN_PING_FILE,
 } from '../../scripts/lib/cdn-config.mjs';
+import { SHOWN_URL } from '../shown.js';
 
 const RELEASE_101 = {
   version: '1.0.1',
@@ -58,6 +60,12 @@ describe('cdn urls', () => {
 
   it('normalizes leading slashes', () => {
     expect(cdnUrl('/checkout-button.abc12345.js')).toBe('https://js.maytes.co/checkout-button.abc12345.js');
+  });
+});
+
+describe('shown report file', () => {
+  it('is published at the URL the SDK requests', () => {
+    expect(cdnUrl(SHOWN_PING_FILE)).toBe(SHOWN_URL);
   });
 });
 

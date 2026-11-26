@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildCdnConfig } from './lib/cdn-config.mjs';
+import { buildCdnConfig, SHOWN_PING_FILE } from './lib/cdn-config.mjs';
 
 const dist = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 
@@ -20,6 +20,7 @@ const { headers, redirects } = buildCdnConfig(releases);
 
 writeFileSync(join(dist, '_headers'), headers);
 writeFileSync(join(dist, '_redirects'), redirects);
+writeFileSync(join(dist, SHOWN_PING_FILE), '');
 console.log(
   `[cdn-config] wrote dist/_headers and dist/_redirects for ${releases.length} release(s)` +
     (hasManifest

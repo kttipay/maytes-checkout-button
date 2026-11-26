@@ -2,6 +2,7 @@ import { applyAppearance, assertAppearance } from './appearance.js';
 import { buildMaytesLogo } from './branding.js';
 import { MaytesError, MaytesErrorCode } from './errors.js';
 import { assertLaunchMode, assertRedirectOverlay, launchCheckout } from './launch.js';
+import { watchShown } from './shown.js';
 import { ensureStylesInjected, releaseStyles } from './styles.js';
 import type { InstanceState } from './state.js';
 import type { RenderButtonCleanup, RenderButtonOptions } from './types.js';
@@ -92,9 +93,11 @@ export function renderButton(
   container.appendChild(button);
 
   let cleaned = false;
+  let stopWatching: (() => void) | undefined;
   const teardown = (): void => {
     if (cleaned) return;
     cleaned = true;
+    stopWatching?.();
     button.removeEventListener('click', handleClick);
     button.remove();
     state.busyViews.delete(followOwnLaunch);
@@ -102,6 +105,7 @@ export function renderButton(
     releaseStyles();
   };
   state.teardowns.add(teardown);
+  stopWatching = watchShown(button, state.config.environment);
 
   return teardown;
 }

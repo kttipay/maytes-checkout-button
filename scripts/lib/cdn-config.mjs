@@ -1,6 +1,7 @@
 import { latestPerMajor } from './semver-lite.mjs';
 
 export const CDN_ORIGIN = 'https://js.maytes.co';
+export const SHOWN_PING_FILE = 'button-shown.txt';
 
 export function cdnUrl(path) {
   return `${CDN_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
@@ -32,6 +33,9 @@ export function buildCdnConfig(releases) {
 
 /integrity.json
   Cache-Control: public, max-age=60
+
+/${SHOWN_PING_FILE}
+  Cross-Origin-Resource-Policy: cross-origin
 `;
 
   const pinRedirects = releases.flatMap(({ version, files }) =>

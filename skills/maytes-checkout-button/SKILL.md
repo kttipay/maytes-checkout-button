@@ -54,6 +54,6 @@ Always do the server part too ([references/server.md](references/server.md)): th
 - [ ] `environment` matches the credentials the server uses.
 - [ ] A webhook route verifies `X-Maytes-Signature` and captures on `checkout.authorized`.
 - [ ] Clicking the button in sandbox opens the Maytes checkout (popup on desktop, same tab on a phone-width window).
-- [ ] If the site sets a CSP: `script-src` allows `https://js.maytes.co` when loading from the CDN, and a strict `style-src` passes `cspNonce`.
+- [ ] If the site sets a CSP: `script-src` allows `https://js.maytes.co` when loading from the CDN, a policy that restricts connections allows it in `connect-src`, and a strict `style-src` passes `cspNonce`.
 
 Full guides: https://github.com/kttipay/maytes-checkout-button#readme and https://developers.maytes.co/checkout-button

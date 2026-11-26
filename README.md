@@ -83,6 +83,8 @@ Allow the CDN origin in your Content Security Policy:
 Content-Security-Policy: script-src 'self' https://js.maytes.co;
 ```
 
+If your policy restricts connections (`connect-src`, or `default-src` without it), also allow `https://js.maytes.co` there. See [What the button sends](docs/guides/security-csp.md#what-the-button-sends).
+
 No `integrity` attribute is possible on this URL, because its bytes change as new `1.x` releases ship. Poll `https://js.maytes.co/integrity.json` if you want to detect changes yourself.
 
 </details>
@@ -94,6 +96,8 @@ npm install @maytes/checkout-button
 ```
 
 ESM (`import`) and CommonJS (`require`) builds ship unminified with type declarations; your bundler minifies them.
+
+If your Content Security Policy restricts connections, allow `https://js.maytes.co` in `connect-src`. See [What the button sends](docs/guides/security-csp.md#what-the-button-sends).
 
 ## API
 

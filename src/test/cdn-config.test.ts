@@ -1,3 +1,7 @@
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildCdnConfig,
@@ -6,7 +10,9 @@ import {
   majorPath,
   semverPath,
   semverUrl,
+  SHOWN_PING_FILE,
 } from '../../scripts/lib/cdn-config.mjs';
+import { SHOWN_URL } from '../shown.js';
 
 const RELEASE_101 = {
   version: '1.0.1',
@@ -58,6 +64,31 @@ describe('cdn urls', () => {
 
   it('normalizes leading slashes', () => {
     expect(cdnUrl('/checkout-button.abc12345.js')).toBe('https://js.maytes.co/checkout-button.abc12345.js');
+  });
+});
+
+describe('shown report file', () => {
+  it('is published at the URL the SDK requests', () => {
+    expect(cdnUrl(SHOWN_PING_FILE)).toBe(SHOWN_URL);
+  });
+
+  it('is written into dist, empty, by the CDN config script', () => {
+    const root = mkdtempSync(join(tmpdir(), 'cdn-config-'));
+    try {
+      cpSync(resolve('scripts'), join(root, 'scripts'), { recursive: true });
+      mkdirSync(join(root, 'dist'));
+      writeFileSync(join(root, 'dist', 'integrity.json'), JSON.stringify(RELEASE_101));
+      execFileSync(process.execPath, [join(root, 'scripts', 'cdn-config.mjs')], { stdio: 'pipe' });
+
+      expect(readFileSync(join(root, 'dist', SHOWN_PING_FILE), 'utf8')).toBe('');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('can be received by cross-origin isolated merchant pages', () => {
+    const { headers } = buildCdnConfig([RELEASE_101]);
+    expect(headers).toContain(`\n/${SHOWN_PING_FILE}\n  Cross-Origin-Resource-Policy: cross-origin\n`);
   });
 });
 

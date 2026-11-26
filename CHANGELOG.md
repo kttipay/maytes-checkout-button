@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.2.2
+
+### Patch Changes
+
+- [#41](https://github.com/kttipay/maytes-checkout-button/pull/41) [`3f496ea`](https://github.com/kttipay/maytes-checkout-button/commit/3f496ea7cf9eb0c63aa6804236bb975f8bd63168) Thanks [@kos-maytes](https://github.com/kos-maytes)! - The first time a button is on screen on a page in production, the SDK now requests an empty file from `js.maytes.co`, so Maytes can count how often buttons are shown on each site. The request carries your site's origin, not the page address, and no cookies or shopper identifiers. If your Content Security Policy restricts connections, allow `https://js.maytes.co`.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-G6ndxsX7NtaBjd3aLGijvWiX68qtlZf2ZZM7niOM4BdGf7GfhBTLV+zddFn9Fwcv
+checkout-button.mjs  sha384-jpTY4k05BKmH5A0XT0rBbFlKzpaFm1Rn/WufcDLxZBaNT7+zdozGYxLwF5htO8H8
+checkout-button.cjs  sha384-iCrUU20sZd27Q84Wg4ivFE0Ok4PGIyazCDpcMzn192cNkIw4dz721D4pd+1B8o4K
+checkout-button.element.js  sha384-kdARzclBvb6R1XhE4ZHX+2wbdERMtXJ3FNr3UErD32+xEw2MTeyjh7QnxLm3jnJs
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.2.2/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.2.2/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.2.2/checkout-button.cjs)
+- [checkout-button.element.js](https://js.maytes.co/v1.2.2/checkout-button.element.js)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.9b40e2d7.js](https://js.maytes.co/checkout-button.9b40e2d7.js)
+- [checkout-button.0daba70a.mjs](https://js.maytes.co/checkout-button.0daba70a.mjs)
+- [checkout-button.7e63520c.cjs](https://js.maytes.co/checkout-button.7e63520c.cjs)
+- [checkout-button.element.6ca1fccf.js](https://js.maytes.co/checkout-button.element.6ca1fccf.js)
+
+<!-- @hash-sri-end -->
 ## 1.2.1
 
 ### Patch Changes
@@ -32,6 +64,7 @@ checkout-button.element.js  sha384-NHwIzALKGM4v3zbs5kbpDmWb52EGQ6+NMh7ARB5UPTCbj
 - [checkout-button.element.afe71cd5.js](https://js.maytes.co/checkout-button.element.afe71cd5.js)
 
 <!-- @hash-sri-end -->
+
 ## 1.2.0
 
 ### Minor Changes

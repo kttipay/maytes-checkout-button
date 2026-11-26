@@ -97,6 +97,8 @@ npm install @maytes/checkout-button
 
 ESM (`import`) and CommonJS (`require`) builds ship unminified with type declarations; your bundler minifies them.
 
+If your Content Security Policy restricts connections, allow `https://js.maytes.co` in `connect-src`. See [What the button sends](docs/guides/security-csp.md#what-the-button-sends).
+
 ## API
 
 `Maytes` is a callable factory, like `Stripe()`. Each call returns an isolated instance.

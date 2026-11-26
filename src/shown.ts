@@ -36,7 +36,9 @@ export function watchShown(button: Element, environment: InternalEnvironment): (
 
   const stop = (): void => {
     document.removeEventListener('visibilitychange', report);
-    observer?.disconnect();
+    try {
+      observer?.disconnect();
+    } catch {}
     observer = null;
   };
 

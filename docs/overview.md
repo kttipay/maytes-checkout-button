@@ -232,6 +232,7 @@ src/
 ├── redirect.ts     # checkoutUrl + redirectToCheckout (URL build + nav)
 ├── framing.ts      # isFramed / sameOriginTop / viewportWidth / navigateTopLevel (leave an embedding iframe)
 ├── env.ts          # isValidEnvironment, resolveBaseUrl (env → URL)
+├── shown.ts        # watchShown(): requests button-shown.txt once a button is on screen (production and staging)
 ├── styles.ts       # ensureStylesInjected / releaseStyles (refcounted)
 ├── overlay.ts      # full-screen <dialog> with Maytes logo + spinner; mounts in the same-origin top document when framed
 ├── branding.ts     # Maytes logo SVG + brand colors

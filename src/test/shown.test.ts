@@ -25,11 +25,21 @@ class FakeObserver {
   }
 
   emit(intersectionRatio: number, isIntersecting = intersectionRatio > 0): void {
-    if (this.disconnected) return;
-    this.callback(
-      [{ intersectionRatio, isIntersecting } as IntersectionObserverEntry],
-      this as unknown as IntersectionObserver,
+    this.deliver([{ intersectionRatio, isIntersecting } as IntersectionObserverEntry]);
+  }
+
+  emitTogether(...ratios: number[]): void {
+    this.deliver(
+      ratios.map(
+        (intersectionRatio) =>
+          ({ intersectionRatio, isIntersecting: intersectionRatio > 0 }) as IntersectionObserverEntry,
+      ),
     );
+  }
+
+  private deliver(entries: IntersectionObserverEntry[]): void {
+    if (this.disconnected) return;
+    this.callback(entries, this as unknown as IntersectionObserver);
   }
 }
 
@@ -131,6 +141,16 @@ describe('button shown report', () => {
     observerAt(0).emit(ratio, isIntersecting);
 
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['arrived on screen', [0, 1], 1],
+    ['left the screen', [1, 0], 0],
+  ])('trusts the latest entry when the button %s within one callback', (_name, ratios, sent) => {
+    makeInstance().renderButton(makeContainer());
+    observerAt(0).emitTogether(...ratios);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(sent);
   });
 
   it('waits until a hidden page becomes visible', () => {
@@ -257,7 +277,10 @@ describe('button shown report', () => {
   ])('stays quiet when fetch %s', async (_name, implementation) => {
     const unhandled = vi.fn();
     process.on('unhandledRejection', unhandled);
-    fetchSpy.mockImplementation(implementation);
+    vi.stubGlobal('fetch', () => {
+      fetchSpy();
+      return implementation();
+    });
     makeInstance().renderButton(makeContainer());
 
     expect(() => observerAt(0).emit(1)).not.toThrow();
@@ -266,6 +289,26 @@ describe('button shown report', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(unhandled).not.toHaveBeenCalled();
     process.off('unhandledRejection', unhandled);
+  });
+
+  it('still reports and removes the button when disconnecting the observer throws', () => {
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class extends FakeObserver {
+        override disconnect(): void {
+          throw new Error('nope');
+        }
+      },
+    );
+    const maytes = makeInstance();
+    const container = makeContainer();
+    maytes.renderButton(container);
+
+    observerAt(0).emit(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    expect(() => maytes.destroy()).not.toThrow();
+    expect(container.querySelector('button')).toBeNull();
   });
 
   it('swallows errors raised while handling what the observer saw', () => {

@@ -4,22 +4,24 @@ import { SDK_VERSION } from './version.js';
 export const SHOWN_URL = 'https://js.maytes.co/button-shown.txt';
 export const SHOWN_PATHS_KEY = '__maytes_checkout_button_shown_paths__';
 
-const REPORTING_ENVIRONMENTS: ReadonlySet<InternalEnvironment> = new Set(['production', 'staging']);
 const VISIBLE_RATIO = 0.5;
-const SHOWN_REQUEST_URL = `${SHOWN_URL}?v=${encodeURIComponent(SDK_VERSION)}`;
 
 type ShownWindow = Window & { [SHOWN_PATHS_KEY]?: Set<string> };
 
 const ignore = (): void => {};
 
-function sendOncePerPath(): void {
+function shownRequestUrl(environment: InternalEnvironment): string {
+  return `${SHOWN_URL}?${new URLSearchParams({ v: SDK_VERSION, env: environment })}`;
+}
+
+function sendOncePerPath(environment: InternalEnvironment): void {
   const shownWindow = window as ShownWindow;
   const paths = (shownWindow[SHOWN_PATHS_KEY] ??= new Set<string>());
   const path = window.location.pathname;
   if (paths.has(path)) return;
   paths.add(path);
   Promise.resolve(
-    fetch(SHOWN_REQUEST_URL, {
+    fetch(shownRequestUrl(environment), {
       mode: 'no-cors',
       cache: 'no-store',
       credentials: 'omit',
@@ -30,7 +32,6 @@ function sendOncePerPath(): void {
 }
 
 export function watchShown(button: Element, environment: InternalEnvironment): () => void {
-  if (!REPORTING_ENVIRONMENTS.has(environment)) return ignore;
   if (typeof IntersectionObserver !== 'function' || typeof fetch !== 'function') return ignore;
 
   let observer: IntersectionObserver | null = null;
@@ -48,7 +49,7 @@ export function watchShown(button: Element, environment: InternalEnvironment): (
     if (!onScreen || document.visibilityState !== 'visible') return;
     try {
       stop();
-      sendOncePerPath();
+      sendOncePerPath(environment);
     } catch {}
   };
 

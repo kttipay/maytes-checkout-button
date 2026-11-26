@@ -22,4 +22,4 @@ For server-rendered pages (PHP, Rails, Django, Laravel, WordPress) or any page w
 
 - Keep the two scripts in this order, both without `async`.
 - `/v1/` always serves the newest `1.x` release. To pin a tested build with SRI, use a pinned URL from the README's "Install" section and its `integrity` value from the CHANGELOG.
-- If the page sets a CSP, allow `https://js.maytes.co` in `script-src`.
+- If the page sets a CSP, allow `https://js.maytes.co` in `script-src`, and in `connect-src` if the policy restricts connections.

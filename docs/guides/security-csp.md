@@ -15,11 +15,11 @@ Content-Security-Policy: script-src 'self' https://js.maytes.co;
 
 With a pinned URL you can also add an `integrity` attribute (SRI); the evergreen `/v1/` URL can't have one because its bytes change with each `1.x` release. Pinned URLs and their SRI hashes are in [Install and versioning](https://github.com/kttipay/maytes-checkout-button#install) and the [CHANGELOG](https://github.com/kttipay/maytes-checkout-button/blob/main/CHANGELOG.md).
 
-If your policy restricts connections (`connect-src`, or `default-src` without it), also allow `https://js.maytes.co` there. This applies to npm installs too.
+If your policy restricts connections (`connect-src`, or `default-src` without it), also allow `https://js.maytes.co` there. This applies to npm installs and to `sandbox` too, so a blocked request shows up before you go live.
 
 ## What the button sends
 
-In production, the first time a button is on screen on a page, the SDK requests an empty file from `js.maytes.co` so that Maytes can count how often buttons are shown on each site. The request carries your site's origin (not the page address) and no cookies or shopper identifiers. As with any request, Cloudflare receives the shopper's IP address and browser details.
+The first time a button is on screen on a page, the SDK requests an empty file from `js.maytes.co` so that Maytes can count how often buttons are shown on each site. This happens in `sandbox` as well as `production`. The request carries your site's origin (not the page address), the SDK version and the environment, for example `button-shown.txt?v=1.2.2&env=production`, and no cookies or shopper identifiers. As with any request, Cloudflare receives the shopper's IP address and browser details.
 
 If your policy blocks the request, the button works as usual, and the browser reports the policy violation.
 

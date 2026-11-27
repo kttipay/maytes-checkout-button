@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.2.2
+
+### Patch Changes
+
+- [#41](https://github.com/kttipay/maytes-checkout-button/pull/41) [`3f496ea`](https://github.com/kttipay/maytes-checkout-button/commit/3f496ea7cf9eb0c63aa6804236bb975f8bd63168) Thanks [@kos-maytes](https://github.com/kos-maytes)! - The first time a button is on screen on a page, the SDK now requests an empty file from `js.maytes.co`, so Maytes can count how often buttons are shown on each site. The request carries your site's origin, not the page address, and no cookies or shopper identifiers. If your Content Security Policy restricts connections, allow `https://js.maytes.co`.
+
+- [#43](https://github.com/kttipay/maytes-checkout-button/pull/43) [`74d61ba`](https://github.com/kttipay/maytes-checkout-button/commit/74d61ba6f941edc5a1d3a7a99278cde4bc6751ff) Thanks [@kos-maytes](https://github.com/kos-maytes)! - The request that counts shown buttons now also carries the SDK version and the environment, for example `button-shown.txt?v=1.2.2&env=production`, so Maytes can see which versions are running and tell live traffic from test traffic. It is now sent from `sandbox` as well as `production`. Nothing else about the request changes: still your site's origin only, no cookies and no shopper identifiers. If your Content Security Policy restricts connections, `https://js.maytes.co` must be allowed in `sandbox` too.
+
+<!-- @hash-sri-start -->
+
+**SRI hashes** (use these in `<script integrity="..." crossorigin="anonymous">`):
+
+```
+checkout-button.js   sha384-O637mWiBxBxuHUL1Z8DEP4WNv6NFXA4RbPAxRcCcohk22QSNZ4onfSccppR2LMqX
+checkout-button.mjs  sha384-wJhHGEIzhqrpZTFr0sRIcy4XOpPvc4nUkAFgO80PCLqoqusYS/eN9TSsxjAEu/xO
+checkout-button.cjs  sha384-ij1a73gSLgiLMJA8Nbq5RgVaU22TYJDha7IwMytDWH7wSzvc7qnXQv6eX16Rel/N
+checkout-button.element.js  sha384-0NGPPv4CZJhlwe6mLRUOKO1d8J+12slwG50ljPZhMIYXJtqSZ/FQck29Qr0/C/uc
+```
+
+**SemVer CDN links** (readable production pins; use with the SRI hashes above):
+
+- [checkout-button.js](https://js.maytes.co/v1.2.2/checkout-button.js)
+- [checkout-button.mjs](https://js.maytes.co/v1.2.2/checkout-button.mjs)
+- [checkout-button.cjs](https://js.maytes.co/v1.2.2/checkout-button.cjs)
+- [checkout-button.element.js](https://js.maytes.co/v1.2.2/checkout-button.element.js)
+
+**Hashed CDN links** (byte-level production pins; use with the SRI hashes above):
+
+- [checkout-button.04095521.js](https://js.maytes.co/checkout-button.04095521.js)
+- [checkout-button.f27aed41.mjs](https://js.maytes.co/checkout-button.f27aed41.mjs)
+- [checkout-button.e2e68c80.cjs](https://js.maytes.co/checkout-button.e2e68c80.cjs)
+- [checkout-button.element.1ebc176a.js](https://js.maytes.co/checkout-button.element.1ebc176a.js)
+
+<!-- @hash-sri-end -->
 ## 1.2.1
 
 ### Patch Changes
@@ -32,6 +66,7 @@ checkout-button.element.js  sha384-NHwIzALKGM4v3zbs5kbpDmWb52EGQ6+NMh7ARB5UPTCbj
 - [checkout-button.element.afe71cd5.js](https://js.maytes.co/checkout-button.element.afe71cd5.js)
 
 <!-- @hash-sri-end -->
+
 ## 1.2.0
 
 ### Minor Changes
